@@ -92,7 +92,9 @@ const styles = StyleSheet.create({
   },
   single: { minHeight: 52 },
   multiline: { minHeight: 100, alignItems: 'flex-start', borderRadius: 22 },
-  input: { flex: 1, fontSize: 15, paddingVertical: 12, paddingHorizontal: 4 },
-  adornment: { justifyContent: 'center' },
+  // minWidth 0: a browser input keeps a min-content width otherwise, and at
+  // 360 px that pushes the right adornment (the USD / KHR toggle) off the edge.
+  input: { flex: 1, minWidth: 0, fontSize: 15, paddingVertical: 12, paddingHorizontal: 4 },
+  adornment: { justifyContent: 'center', flexShrink: 0 },
   helper: { marginLeft: 12 },
 });

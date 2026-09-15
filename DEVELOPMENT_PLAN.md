@@ -232,8 +232,14 @@ spendlog_native/
 - [x] Android back button closes an open sheet before popping the stack
 - [x] Khmer pass: every visible string through `t()`, Khmer font renders, no clipped labels
 - [x] Dark mode pass on every screen, including sheets and the frosted tab bar
-- [ ] Safe areas, keyboard avoidance in sheets, 360 px width check
-- [ ] Accessibility labels on icon-only buttons
+- [x] 360 px width check: every screen and both sheets walked at 360 × 740 in Expo web with
+      Playwright, measuring for anything past the viewport edge. One hit — the USD / KHR toggle
+      spilled out of the price field because a browser input keeps a min-content width; fixed
+      with `minWidth: 0` on the input and `flexShrink: 0` on the adornments (`Input.tsx`)
+- [x] Accessibility labels: every `Pressable` audited — each has a role and either text or an
+      `accessibilityLabel`; `IconButton` and `Fab` require one through their props
+- [ ] Safe areas and keyboard avoidance confirmed on a real phone (insets and
+      `keyboardBehavior="interactive"` are in place; only the device check is open)
 
 ## Phase 10: Build and release
 - [ ] Install a JDK for native builds (`sudo apt install openjdk-17-jdk`, export `JAVA_HOME`)
@@ -243,7 +249,7 @@ spendlog_native/
 - [ ] `EXPO_PUBLIC_API_URL` set for the deployed backend; release APK / AAB
 - [ ] iOS deferred (no macOS on this machine); EAS can build it later
 
-## Status (15 Sep 2026)
+## Status (16 Sep 2026)
 
 Phases 0–8 are built and were exercised in a browser (Expo web) against the
 local backend with Playwright: sign in, the dashboard, adding an expense
@@ -254,9 +260,9 @@ Khmer and dark mode. The Android bundle compiles (`expo export --platform
 android`). Not yet exercised on a device: the report export share sheet, the
 photo picker, the date picker dialogs, and Android back handling.
 
-Still open from Phase 9 and 10: safe-area / keyboard checks on a real phone,
-the 360 px width pass, accessibility labels on every icon-only button, a JDK
-for `expo run:android`, icons and splash, and the release build.
+The 360 px width pass and the accessibility-label audit are done (Phase 9).
+Still open: safe-area / keyboard checks on a real phone, a JDK for
+`expo run:android`, icons and splash, and the release build (Phase 10).
 
 ## Running it
 
