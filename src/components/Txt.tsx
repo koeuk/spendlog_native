@@ -2,11 +2,13 @@ import { Text, type TextProps, type TextStyle } from 'react-native';
 
 import { useTheme, type FontWeight } from '@/theme/useTheme';
 
-export type TxtVariant = 'display' | 'title' | 'heading' | 'body' | 'label' | 'caption';
+export type TxtVariant = 'display' | 'title' | 'xl' | 'heading' | 'body' | 'label' | 'caption';
 
 const VARIANTS: Record<TxtVariant, { size: number; weight: FontWeight; lineHeight: number }> = {
   display: { size: 34, weight: 'bold', lineHeight: 40 },
   title: { size: 22, weight: 'bold', lineHeight: 28 },
+  /** A figure that is the point of its card: a total, a balance. */
+  xl: { size: 28, weight: 'bold', lineHeight: 34 },
   heading: { size: 17, weight: 'semibold', lineHeight: 22 },
   body: { size: 15, weight: 'regular', lineHeight: 21 },
   label: { size: 13, weight: 'medium', lineHeight: 18 },

@@ -48,6 +48,8 @@ export function Sheet({ sheetRef, title, children, onDismiss }: SheetProps) {
       enableDynamicSizing
       maxDynamicContentSize={height * 0.9}
       enablePanDownToClose
+      // A picker opened from a form stacks on top of it and hands back when it closes.
+      stackBehavior="push"
       backdropComponent={Backdrop}
       backgroundStyle={{ backgroundColor: theme.surface, borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet }}
       handleIndicatorStyle={{ backgroundColor: theme.faint(0.18), width: 36 }}

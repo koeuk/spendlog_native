@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react-native';
 import { Inbox, WifiOff } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { Animated, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Animated, Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { apiErrorMessage } from '@/api/client';
 import { useT } from '@/i18n';
@@ -77,8 +77,8 @@ export function Skeleton({ height = 16, width = '100%', style, rounded = 10 }: S
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(opacity, { toValue: 1, duration: 700, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 0.5, duration: 700, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 1, duration: 700, useNativeDriver: Platform.OS !== 'web' }),
+        Animated.timing(opacity, { toValue: 0.5, duration: 700, useNativeDriver: Platform.OS !== 'web' }),
       ]),
     );
     loop.start();

@@ -1,7 +1,7 @@
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
-import { StyleSheet, TextInput, View, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native';
+import { Platform, StyleSheet, TextInput, View, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native';
 
 import { radius } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -24,7 +24,8 @@ export interface InputProps extends TextInputProps {
 export function Input({ label, error, hint, left, right, sheet = false, containerStyle, style, multiline, onFocus, onBlur, ...rest }: InputProps) {
   const theme = useTheme();
   const [focused, setFocused] = useState(false);
-  const Component = sheet ? BottomSheetTextInput : TextInput;
+  // The sheet's own input lifts with the keyboard on a phone; the browser has no such input and no keyboard to dodge.
+  const Component = sheet && Platform.OS !== 'web' ? BottomSheetTextInput : TextInput;
   const borderColor = error ? theme.errorInk : focused ? theme.accent : theme.inputBorder;
 
   return (
@@ -42,6 +43,7 @@ export function Input({ label, error, hint, left, right, sheet = false, containe
         ]}>
         {left ? <View style={styles.adornment}>{left}</View> : null}
         <Component
+          accessibilityLabel={label}
           {...rest}
           multiline={multiline}
           placeholderTextColor={theme.placeholder}
@@ -56,6 +58,7 @@ export function Input({ label, error, hint, left, right, sheet = false, containe
           style={[
             styles.input,
             { color: theme.text, fontFamily: theme.font('regular') },
+            webOutline,
             multiline && { minHeight: 88, textAlignVertical: 'top', paddingTop: 12 },
             style,
           ]}
@@ -74,6 +77,9 @@ export function Input({ label, error, hint, left, right, sheet = false, containe
     </View>
   );
 }
+
+// The browser draws its own focus ring; the pill's accent border already says "focused".
+const webOutline = Platform.select({ web: { outlineStyle: 'none' } as unknown as TextInputProps['style'], default: undefined });
 
 const styles = StyleSheet.create({
   container: { gap: 6 },
