@@ -2,6 +2,7 @@ import { Tabs } from 'expo-router';
 
 import { TabBar } from '@/components/TabBar';
 import { useSheet } from '@/components/Sheet';
+import { useMoneySettings } from '@/hooks/useMoneySettings';
 import { MenuSheet } from '@/sheets/MenuSheet';
 import { useTheme } from '@/theme/useTheme';
 
@@ -13,6 +14,9 @@ export const unstable_settings = {
 export default function AppLayout() {
   const theme = useTheme();
   const menu = useSheet();
+  // Fetched as soon as the shell mounts, so the first amount field already
+  // starts on the admin's default currency rather than the fallback.
+  useMoneySettings();
 
   return (
     <>
