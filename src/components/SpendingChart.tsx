@@ -66,15 +66,15 @@ export function SpendingChart({ buckets, label, total, height = 150 }: SpendingC
         })}
       </View>
       <View style={styles.labels}>
-        {buckets.map((bucket) => (
-          <View key={bucket.key} style={styles.labelCell}>
-            {bucket.label ? (
-              <Txt variant="caption" faint={0.5} numberOfLines={1} style={styles.labelText}>
-                {bucket.label}
-              </Txt>
-            ) : null}
-          </View>
-        ))}
+        {buckets.map((bucket, index) =>
+          bucket.label ? (
+            // Centred under its column and free to spill over its neighbours,
+            // so a two-digit day still reads when there are thirty-one columns.
+            <Txt key={bucket.key} variant="caption" faint={0.5} align="center" style={[styles.labelText, { left: `${((index + 0.5) / buckets.length) * 100}%` }]}>
+              {bucket.label}
+            </Txt>
+          ) : null,
+        )}
       </View>
     </View>
   );
@@ -86,8 +86,7 @@ const styles = StyleSheet.create({
   bars: { flexDirection: 'row', alignItems: 'flex-end' },
   column: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', height: '100%' },
   bar: { borderRadius: 4, minWidth: 3 },
-  labels: { flexDirection: 'row', height: 16 },
-  labelCell: { flex: 1, alignItems: 'center' },
-  labelText: { fontSize: 10, lineHeight: 14 },
+  labels: { height: 16 },
+  labelText: { position: 'absolute', top: 0, width: 36, marginLeft: -18, fontSize: 10, lineHeight: 14 },
   emptyOverlay: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
 });

@@ -178,7 +178,7 @@ function ReportBody({ data, page, onPage, onOpenExpense }: { data: Report; page:
                   {slice.name}
                 </Txt>
                 <Txt variant="label" faint={0.55} numberOfLines={1}>
-                  {t(':count expenses', { count: slice.count })} · {t('avg')} {formatMoney(slice.average)}
+                  {slice.count === 1 ? t('1 expense') : t(':count expenses', { count: slice.count })} · {t('avg')} {formatMoney(slice.average)}
                 </Txt>
               </View>
               <View style={styles.sliceFigures}>
