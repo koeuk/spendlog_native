@@ -1,0 +1,92 @@
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import type { ReactNode } from 'react';
+import { useState } from 'react';
+import { StyleSheet, TextInput, View, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native';
+
+import { radius } from '@/theme/tokens';
+import { useTheme } from '@/theme/useTheme';
+
+import { Txt } from './Txt';
+
+export interface InputProps extends TextInputProps {
+  label?: string;
+  error?: string | null;
+  hint?: string;
+  left?: ReactNode;
+  right?: ReactNode;
+  /** Inside a bottom sheet the input must be the sheet's own, so the keyboard lifts it. */
+  sheet?: boolean;
+  containerStyle?: StyleProp<ViewStyle>;
+  multiline?: boolean;
+}
+
+/** A pill-shaped field with its label above and any error below. */
+export function Input({ label, error, hint, left, right, sheet = false, containerStyle, style, multiline, onFocus, onBlur, ...rest }: InputProps) {
+  const theme = useTheme();
+  const [focused, setFocused] = useState(false);
+  const Component = sheet ? BottomSheetTextInput : TextInput;
+  const borderColor = error ? theme.errorInk : focused ? theme.accent : theme.inputBorder;
+
+  return (
+    <View style={[styles.container, containerStyle]}>
+      {label ? (
+        <Txt variant="label" faint={0.7} style={styles.label}>
+          {label}
+        </Txt>
+      ) : null}
+      <View
+        style={[
+          styles.field,
+          { backgroundColor: theme.surface, borderColor, borderWidth: focused || error ? 1.6 : 1 },
+          multiline ? styles.multiline : styles.single,
+        ]}>
+        {left ? <View style={styles.adornment}>{left}</View> : null}
+        <Component
+          {...rest}
+          multiline={multiline}
+          placeholderTextColor={theme.placeholder}
+          onFocus={(event) => {
+            setFocused(true);
+            onFocus?.(event);
+          }}
+          onBlur={(event) => {
+            setFocused(false);
+            onBlur?.(event);
+          }}
+          style={[
+            styles.input,
+            { color: theme.text, fontFamily: theme.font('regular') },
+            multiline && { minHeight: 88, textAlignVertical: 'top', paddingTop: 12 },
+            style,
+          ]}
+        />
+        {right ? <View style={styles.adornment}>{right}</View> : null}
+      </View>
+      {error ? (
+        <Txt variant="label" color={theme.errorInk} style={styles.helper}>
+          {error}
+        </Txt>
+      ) : hint ? (
+        <Txt variant="label" faint={0.5} style={styles.helper}>
+          {hint}
+        </Txt>
+      ) : null}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { gap: 6 },
+  label: { marginLeft: 12 },
+  field: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    paddingHorizontal: 18,
+  },
+  single: { minHeight: 52 },
+  multiline: { minHeight: 100, alignItems: 'flex-start', borderRadius: 22 },
+  input: { flex: 1, fontSize: 15, paddingVertical: 12, paddingHorizontal: 4 },
+  adornment: { justifyContent: 'center' },
+  helper: { marginLeft: 12 },
+});

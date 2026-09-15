@@ -40,6 +40,7 @@ export function onUnauthorized(listener: () => void): () => void {
   };
 }
 
+// eslint-disable-next-line import/no-named-as-default-member -- axios.create is the documented factory
 export const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 20_000,
