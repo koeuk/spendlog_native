@@ -3,7 +3,7 @@ import { Inbox, WifiOff } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Animated, Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { apiErrorMessage } from '@/api/client';
+import { apiErrorMessage, errorStatus } from '@/api/client';
 import { useT } from '@/i18n';
 import { radius } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -55,7 +55,7 @@ export function ErrorState({ error, onRetry, compact = false }: ErrorStateProps)
         <WifiOff size={26} color={theme.errorInk} />
       </View>
       <Txt align="center" faint={0.7}>
-        {t(apiErrorMessage(error))}
+        {errorStatus(error) === 403 ? t('You do not have access to this.') : t(apiErrorMessage(error))}
       </Txt>
       {onRetry ? <PillButton label={t('Try again')} onPress={onRetry} variant="tonal" size="sm" style={styles.action} /> : null}
     </View>

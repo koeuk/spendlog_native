@@ -1,7 +1,7 @@
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView, type BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import type { ReactNode, RefObject } from 'react';
-import { useRef } from 'react';
-import { useWindowDimensions } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { BackHandler, Platform, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { layout, radius } from '@/theme/tokens';
@@ -40,11 +40,26 @@ export function Sheet({ sheetRef, title, children, onDismiss }: SheetProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
+  const [open, setOpen] = useState(false);
+
+  // Android's back button closes an open sheet before it pops the screen.
+  useEffect(() => {
+    if (!open || Platform.OS !== 'android') return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      sheetRef.current?.dismiss();
+      return true;
+    });
+    return () => subscription.remove();
+  }, [open, sheetRef]);
 
   return (
     <BottomSheetModal
       ref={sheetRef}
-      onDismiss={onDismiss}
+      onChange={(index) => setOpen(index >= 0)}
+      onDismiss={() => {
+        setOpen(false);
+        onDismiss?.();
+      }}
       enableDynamicSizing
       maxDynamicContentSize={height * 0.9}
       enablePanDownToClose

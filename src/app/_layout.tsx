@@ -18,6 +18,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { getBranding } from '@/api/endpoints/branding';
 import { queryClient } from '@/api/queryClient';
+import { OfflineBanner } from '@/components/OfflineBanner';
 import { ToastHost } from '@/components/ToastHost';
 import { brandingQueryKey } from '@/hooks/useBranding';
 import { useSessionStore } from '@/store/session';
@@ -82,6 +83,7 @@ function ThemedRoot() {
   return (
     <View style={[styles.root, { backgroundColor: theme.ground }]}>
       <StatusBar style={theme.isDark ? 'light' : 'dark'} />
+      <OfflineBanner />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.ground } }}>
         <Stack.Protected guard={signedIn}>
           <Stack.Screen name="(app)" />

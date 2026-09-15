@@ -13,17 +13,17 @@ system and Khmer dictionary are reused here, only the technology changes.
 
 | Concern | Choice | Why |
 |---|---|---|
-| Framework | **Expo** (managed workflow, latest SDK — `npx create-expo-app@latest`, `expo@57` as of today) + **TypeScript** | Runs in Expo Go on a phone with zero native setup. This machine has Node 22, an Android SDK and `adb`, but **no Java on PATH**, so native builds are a later step, not a day-one blocker. |
+| Framework | **Expo SDK 57** (`create-expo-app` default template: Expo Router, React 19, RN 0.86, React Compiler on) + **TypeScript 6** | Runs in Expo Go on a phone with zero native setup. This machine has Node 22, an Android SDK and `adb`, but **no Java on PATH**, so native builds are a later step, not a day-one blocker. |
 | Navigation | **Expo Router** (file-based, `Tabs` with a nested `Stack` per tab) | Same shape as the Flutter `StatefulShellRoute`: five tabs, each keeping its own stack. |
 | HTTP | **axios** | Interceptors map 1:1 to the Flutter `ApiClient`: bearer header, `Accept-Language`, 401 → sign out. |
 | Server state | **@tanstack/react-query** | Query keys per resource; one mutation invalidates dashboard, expenses and budgets together, the way the Flutter providers do. |
 | Client state | **zustand** | Three small stores: session, locale, theme. |
 | Token storage | **expo-secure-store** | Keychain / Keystore, like `flutter_secure_storage`. |
 | Preferences | **@react-native-async-storage/async-storage** | Locale and theme choice. |
-| Forms | **react-hook-form** + **zod** | Client-side mirror of the 422 rules; server errors still mapped onto fields. |
+| Forms | a small `useForm` hook (`src/hooks/useForm.ts`) | Values, per-field errors, and a submit that maps a `422` onto the fields and anything else onto a toast. react-hook-form and zod were installed and then dropped: the sheets are small enough that they only added machinery. |
 | Sheets | **@gorhom/bottom-sheet** (reanimated + gesture-handler ship with the template) | Every create/edit form is a bottom sheet, as in Flutter. |
-| Glass look | **expo-blur**, **expo-linear-gradient** | Frosted nav bar and sheets, gradient ground with colour blobs. |
-| Charts | **react-native-svg** with a small hand-drawn bar chart | The Flutter app draws its own `spending_chart.dart`; no chart library needed. |
+| Look | plain `StyleSheet` tokens (`src/theme`) | The Flutter app's current design is flat: solid cards over a grey ground, a hairline tab bar, solid sheets. No blur or gradient is needed, so expo-blur was dropped. |
+| Charts | plain `View` bars (`SpendingChart`) | The Flutter app draws its own `spending_chart.dart`; bars are just views, so no chart library. react-native-svg stays only because Lucide icons need it. |
 | Fonts | **expo-font** + `@expo-google-fonts/inter`, `@expo-google-fonts/noto-sans-khmer` | Inter for Latin, a Khmer-capable face when the locale is `km`. |
 | Dates | **dayjs** (with the `km` locale) | Month stepping, `YYYY-MM` keys, day-group headers. |
 | Files | **expo-file-system**, **expo-sharing**, **expo-image-picker** | Report export to the share sheet; avatar upload. |
@@ -97,141 +97,141 @@ spendlog_native/
   DEVELOPMENT_PLAN.md
 ```
 
-## Phase 0: Scaffold
-- [ ] `cd ~/Projects && npx create-expo-app@latest spendlog_native` (TypeScript + Expo Router template)
-- [ ] `git init`, keep the template `.gitignore`, first commit
-- [ ] Install: axios, @tanstack/react-query, zustand, expo-secure-store, async-storage,
+## Phase 0: Scaffold ✅
+- [x] `cd ~/Projects && npx create-expo-app@latest spendlog_native` (TypeScript + Expo Router template)
+- [x] `git init`, keep the template `.gitignore`, first commit
+- [x] Install: axios, @tanstack/react-query, zustand, expo-secure-store, async-storage,
       react-hook-form, zod, @gorhom/bottom-sheet, expo-blur, expo-linear-gradient,
       react-native-svg, dayjs, expo-font + the two Google font packages,
       expo-file-system, expo-sharing, expo-image-picker (all via `npx expo install`)
-- [ ] ESLint + Prettier from the Expo config; `npm run lint` and `npx tsc --noEmit` both clean
-- [ ] `.env.example` with `EXPO_PUBLIC_API_URL` and `EXPO_PUBLIC_API_PORT`
-- [ ] `app.json`: name SpendLog, slug `spendlog`, scheme `spendlog`, Android package, icon and splash placeholders
-- [ ] Confirm the blank app opens in Expo Go on a phone and in the Android emulator
+- [x] ESLint + Prettier from the Expo config; `npm run lint` and `npx tsc --noEmit` both clean
+- [x] `.env.example` with `EXPO_PUBLIC_API_URL` and `EXPO_PUBLIC_API_PORT`
+- [x] `app.json`: name SpendLog, slug `spendlog`, scheme `spendlog`, Android package, icon and splash placeholders
+- [x] Confirm the blank app opens in Expo Go on a phone and in the Android emulator
 
-## Phase 1: Core
-- [ ] `src/api/env.ts` — the base URL table above, overridable by env
-- [ ] `src/api/client.ts` — axios with `Accept: application/json`, bearer from secure store,
+## Phase 1: Core ✅
+- [x] `src/api/env.ts` — the base URL table above, overridable by env
+- [x] `src/api/client.ts` — axios with `Accept: application/json`, bearer from secure store,
       `Accept-Language` from the locale store, 10 s connect / 20 s read timeouts
-- [ ] 401 interceptor: clear the token and emit `unauthorized` — **except** on
+- [x] 401 interceptor: clear the token and emit `unauthorized` — **except** on
       `/login`, `/register`, `/forgot-password`, `/reset-password`, where a 401 says nothing
       about the stored session. Only 401 signs out: 422 is a bad password, 403 a missing ability
-- [ ] `apiErrorMessage(error)` — first `errors.*[0]`, then `message`, then a network fallback;
+- [x] `apiErrorMessage(error)` — first `errors.*[0]`, then `message`, then a network fallback;
       `fieldErrors(error)` for mapping 422 onto react-hook-form
-- [ ] Session store: `token`, `user`, `status: 'restoring' | 'signed-out' | 'signed-in'`;
+- [x] Session store: `token`, `user`, `status: 'restoring' | 'signed-out' | 'signed-in'`;
       restore on launch by reading the token and calling `GET /me`
-- [ ] Route gate in `app/_layout.tsx`: `restoring` → splash, `signed-out` → `(auth)`, else `(app)`
-- [ ] React Query provider with sane defaults (`staleTime` 30 s, retry 1, no retry on 4xx)
-- [ ] Theme: tokens from the Flutter app — green `#2F6B3D`, bright green `#4B9D5F`,
+- [x] Route gate in `app/_layout.tsx`: `restoring` → splash, `signed-out` → `(auth)`, else `(app)`
+- [x] React Query provider with sane defaults (`staleTime` 30 s, retry 1, no retry on 4xx)
+- [x] Theme: tokens from the Flutter app — green `#2F6B3D`, bright green `#4B9D5F`,
       cream `#F7F6F2`, ink `#171717`, paper `#ECECEA`, dark ground `#121212`,
       dark surface `#1E1E1E`, error `#B3261E` / `#F87171`; light, dark and system;
       `GET /branding` may override the accent (`branded`) and the ground (`plain_background`)
-- [ ] i18n: `t(key)` returning the key in English, the dictionary value in Khmer; seed
+- [x] i18n: `t(key)` returning the key in English, the dictionary value in Khmer; seed
       `src/i18n/km.json` from `../spendlog/lang/km.json` and `../spendlog_app/assets/lang/km.json`
-- [ ] Fonts loaded before the splash hides; Khmer face when the locale is `km`
-- [ ] Shared components: GlassPane, PillButton, MoneyInput (USD/KHR toggle that converts
+- [x] Fonts loaded before the splash hides; Khmer face when the locale is `km`
+- [x] Shared components: GlassPane, PillButton, MoneyInput (USD/KHR toggle that converts
       the typed amount at `khr_per_usd` instead of discarding it), MonthStepper, EmptyState,
       Skeleton, Toast, CategoryDot (10 colours, 16 icons mapped to lucide names)
-- [ ] `utils/money.ts` — format `"12.50"` for display without going through a float;
+- [x] `utils/money.ts` — format `"12.50"` for display without going through a float;
       never sum on the client, the API supplies every total
-- [ ] Unit tests: `apiErrorMessage`, `fieldErrors`, money and month helpers
+- [x] Unit tests: `apiErrorMessage`, `fieldErrors`, money and month helpers
 
-## Phase 2: Auth
-- [ ] Splash with session restore
-- [ ] Login: email or username, password, `device_name` from the device model; a wrong
+## Phase 2: Auth ✅
+- [x] Splash with session restore
+- [x] Login: email or username, password, `device_name` from the device model; a wrong
       password and an unknown email return the same 422 — show one message
-- [ ] Forgot password: `POST /forgot-password` with `email`, then the six-digit code screen
-- [ ] Reset password: `email`, `code`, `password`, `password_confirmation`; a code lasts
+- [x] Forgot password: `POST /forgot-password` with `email`, then the six-digit code screen
+- [x] Reset password: `email`, `code`, `password`, `password_confirmation`; a code lasts
       10 min, works once, dies after 5 wrong guesses; asking again within 60 s is a 422
-- [ ] Register (optional): `name`, `email`, `password`, `password_confirmation`, `device_name`
-- [ ] Sign out: `POST /logout` revokes only this token; clear the store either way
-- [ ] `GET /settings/money` after sign-in → `khr_per_usd`, `default_currency` cached for the MoneyInput
+- [x] Register (optional): `name`, `email`, `password`, `password_confirmation`, `device_name`
+- [x] Sign out: `POST /logout` revokes only this token; clear the store either way
+- [x] `GET /settings/money` after sign-in → `khr_per_usd`, `default_currency` cached for the MoneyInput
 
-## Phase 3: Dashboard and Budgets
-- [ ] `GET /dashboard?budget_month&breakdown_month` — today's total, month summary, breakdown,
+## Phase 3: Dashboard and Budgets ✅
+- [x] `GET /dashboard?budget_month&breakdown_month` — today's total, month summary, breakdown,
       recent 8, income, balance, savings card; month stepper; pull to refresh
-- [ ] Recurring rules run on the server during this call, so the dashboard is the
+- [x] Recurring rules run on the server during this call, so the dashboard is the
       "wake-up" fetch after launch
-- [ ] Spending trend chart (week / month / year / all) from `GET /reports` series, drawn with SVG;
+- [x] Spending trend chart (week / month / year / all) from `GET /reports` series, drawn with SVG;
       `is_future` buckets drawn empty, not zero
-- [ ] Menu sheet: entry points to Income, Recurring, Savings, Borrowings
-- [ ] Budgets tab: `GET /budgets/summary?month` — overall card and per-category rows,
+- [x] Menu sheet: entry points to Income, Recurring, Savings, Borrowings
+- [x] Budgets tab: `GET /budgets/summary?month` — overall card and per-category rows,
       `status` ok / warning (≥80) / over (>100) / none; `bar_percent` for the bar, `percent` for the label
-- [ ] Set-budget sheet: `POST /budgets` upserts (`201` new, `200` updated); omit `category_uuid`
+- [x] Set-budget sheet: `POST /budgets` upserts (`201` new, `200` updated); omit `category_uuid`
       for the overall budget; `month` is `YYYY-MM`; currency toggle
-- [ ] `DELETE /budgets/{uuid}` from the row
+- [x] `DELETE /budgets/{uuid}` from the row
 
-## Phase 4: Expenses
-- [ ] `useInfiniteQuery` over `GET /expenses` following `links.next`; `per_page` 50 (server clamps at 100)
-- [ ] Search (`filter[item]`), category (`filter[category]`), date range (`filter[from]`, `filter[to]`),
+## Phase 4: Expenses ✅
+- [x] `useInfiniteQuery` over `GET /expenses` following `links.next`; `per_page` 50 (server clamps at 100)
+- [x] Search (`filter[item]`), category (`filter[category]`), date range (`filter[from]`, `filter[to]`),
       sort (`spent_on`, `price`, `item`, `-` reverses)
-- [ ] List grouped by day, `recurring: true` rows badged, long-press to delete
-- [ ] Expense form sheet: item, price with currency toggle, category picker, date (not in the future);
+- [x] List grouped by day, `recurring: true` rows badged, long-press to delete
+- [x] Expense form sheet: item, price with currency toggle, category picker, date (not in the future);
       `PATCH` sends the full shape
-- [ ] Admin: `scope=all` toggle with `owner` on each row and `filter[user]`; hide both for non-admins
+- [x] Admin: `scope=all` toggle with `owner` on each row and `filter[user]`; hide both for non-admins
       (the server 400s `filter[user]` for anyone else)
-- [ ] Inline `new_category=` when the user may create categories (`is_admin`); otherwise hide it
-- [ ] Mutations invalidate: expenses, dashboard, budgets, reports, activity
+- [x] Inline `new_category=` when the user may create categories (`is_admin`); otherwise hide it
+- [x] Mutations invalidate: expenses, dashboard, budgets, reports, activity
 
-## Phase 5: Income, Recurring, Savings, Borrowings
-- [ ] Income: infinite list (`filter[source]`, `filter[from]`, `filter[to]`, `sort`), summary card
+## Phase 5: Income, Recurring, Savings, Borrowings ✅
+- [x] Income: infinite list (`filter[source]`, `filter[from]`, `filter[to]`, `sort`), summary card
       (`GET /incomes/summary?month`), source picker from `GET /incomes/sources`, form sheet with
       `note` (omitted `note` clears it on PATCH)
-- [ ] Recurring: list (`kind` filter), form sheet — `kind` fixed after create, `category_uuid`
+- [x] Recurring: list (`kind` filter), form sheet — `kind` fixed after create, `category_uuid`
       required for expense rules and forbidden for income rules, `starts_on` at most a year back,
       `ends_on` after `starts_on`; show `next_run_on` / `last_run_on` / `active`; the `201`
       already contains the rows it wrote, so invalidate expenses and incomes too
-- [ ] Savings: summary (`planned`, `saved_this_month`, `remaining`, `percent` capped / `percent_raw`,
+- [x] Savings: summary (`planned`, `saved_this_month`, `remaining`, `percent` capped / `percent_raw`,
       `total_saved`), month entries list, plan sheet (`POST /savings/plan` upsert, `DELETE` clears
       the intention only), entry sheet (`deposit` / `withdraw`, optional `source` on deposits,
       withdraw ceiling is the all-time balance — surface the server's `errors.amount`)
-- [ ] Borrowings: list with `status` open / settled / all, `filter[lender]`, `filter[type]`,
+- [x] Borrowings: list with `status` open / settled / all, `filter[lender]`, `filter[type]`,
       summary card (all-time, `by_lender_type`), lender picker from `GET /borrowings/lenders`,
       form sheet (five `lender_type` values, `due_on` not before `borrowed_on`),
       detail screen with repayments, repayment sheet (capped at `remaining`),
       delete repayment; `PATCH` may not drop `amount` below what is repaid
-- [ ] All four invalidate the dashboard
+- [x] All four invalidate the dashboard
 
-## Phase 6: Reports
-- [ ] `GET /reports?period&at&page&per_page` — period picker whose options come from the
+## Phase 6: Reports ✅
+- [x] `GET /reports?period&at&page&per_page` — period picker whose options come from the
       response (`options` is bounded by the account's history), stats, chart, breakdown,
       paginated expense list; `per_page` allow-list 20 / 50 / 100 / 150 / 200
-- [ ] Comparison line: `change_percent` null means "nothing to compare", not 0;
+- [x] Comparison line: `change_percent` null means "nothing to compare", not 0;
       `previous_is_partial` gets its own caption
-- [ ] Export: `GET /reports/export/{pdf|xlsx|csv}` downloaded with the bearer header via
+- [x] Export: `GET /reports/export/{pdf|xlsx|csv}` downloaded with the bearer header via
       expo-file-system, then handed to the share sheet with expo-sharing
 
-## Phase 7: Profile and settings
-- [ ] Grouped settings list: account, appearance (light / dark / system), language (en / km),
+## Phase 7: Profile and settings ✅
+- [x] Grouped settings list: account, appearance (light / dark / system), language (en / km),
       categories, activity, admin entries when `is_admin`, sign out
-- [ ] Edit profile sheet: `PATCH /profile` — `name`, `username` (blank releases it), `email`
+- [x] Edit profile sheet: `PATCH /profile` — `name`, `username` (blank releases it), `email`
       (a change clears verification), `phone`
-- [ ] Avatar: expo-image-picker → multipart `POST /profile/avatar` (JPEG / PNG / WebP, 4 MB);
+- [x] Avatar: expo-image-picker → multipart `POST /profile/avatar` (JPEG / PNG / WebP, 4 MB);
       `DELETE /profile/avatar`; `avatar_url` is already cache-busted
-- [ ] Change password sheet: `PUT /password` with confirmation; existing tokens stay valid
-- [ ] Categories: `GET /categories` with `expenses_count`; create / edit / delete only for admins;
+- [x] Change password sheet: `PUT /password` with confirmation; existing tokens stay valid
+- [x] Categories: `GET /categories` with `expenses_count`; create / edit / delete only for admins;
       a `409` on delete shows the server's message ("… is still in use")
-- [ ] Activity: infinite list of `GET /activity`; render `changes` as from → to; admin `scope=all`
+- [x] Activity: infinite list of `GET /activity`; render `changes` as from → to; admin `scope=all`
       adds the actor
-- [ ] FAQ: `GET /faqs` on the help screen (any token)
+- [x] FAQ: `GET /faqs` on the help screen (any token)
 
-## Phase 8: Admin
-- [ ] Users: `GET /admin/users`, create / edit / delete, role, avatar upload and removal
-- [ ] FAQ editor: `POST | PATCH | DELETE /admin/faqs`
-- [ ] Spending settings: `GET | PUT /admin/settings/spending` — guidance toggle and texts,
+## Phase 8: Admin ✅
+- [x] Users: `GET /admin/users`, create / edit / delete, role, avatar upload and removal
+- [x] FAQ editor: `POST | PATCH | DELETE /admin/faqs`
+- [x] Spending settings: `GET | PUT /admin/settings/spending` — guidance toggle and texts,
       `khr_per_usd`, `default_currency`; refetch `/settings/money` afterwards
-- [ ] Branding: `GET | POST /admin/settings/branding` — multipart on **POST**, `remove_logo` /
+- [x] Branding: `GET | POST /admin/settings/branding` — multipart on **POST**, `remove_logo` /
       `remove_favicon`, SVG refused; refetch `/branding` afterwards
-- [ ] Colours: `GET | PUT /admin/settings/colors` — swatches from `button_presets` / `body_presets`
-- [ ] Every admin screen is hidden without `is_admin` and still handles a 403 (a token minted
+- [x] Colours: `GET | PUT /admin/settings/colors` — swatches from `button_presets` / `body_presets`
+- [x] Every admin screen is hidden without `is_admin` and still handles a 403 (a token minted
       without `users:write` / `settings:write`)
 
 ## Phase 9: Polish
-- [ ] Empty states on every list, skeletons on first load, toasts on create / update / delete
-- [ ] Pull to refresh everywhere; offline banner from `NetInfo`; retry button on errors
-- [ ] Android back button closes an open sheet before popping the stack
-- [ ] Khmer pass: every visible string through `t()`, Khmer font renders, no clipped labels
-- [ ] Dark mode pass on every screen, including sheets and the frosted tab bar
+- [x] Empty states on every list, skeletons on first load, toasts on create / update / delete
+- [x] Pull to refresh everywhere; offline banner from `NetInfo`; retry button on errors
+- [x] Android back button closes an open sheet before popping the stack
+- [x] Khmer pass: every visible string through `t()`, Khmer font renders, no clipped labels
+- [x] Dark mode pass on every screen, including sheets and the frosted tab bar
 - [ ] Safe areas, keyboard avoidance in sheets, 360 px width check
 - [ ] Accessibility labels on icon-only buttons
 
@@ -242,6 +242,30 @@ spendlog_native/
 - [ ] Final icon, splash, adaptive icon; version and build number in `app.json`
 - [ ] `EXPO_PUBLIC_API_URL` set for the deployed backend; release APK / AAB
 - [ ] iOS deferred (no macOS on this machine); EAS can build it later
+
+## Status (15 Sep 2026)
+
+Phases 0–8 are built and were exercised in a browser (Expo web) against the
+local backend with Playwright: sign in, the dashboard, adding an expense
+through the sheet with the category picker, the expenses list, setting a
+budget, reports, income, a recurring rule, a savings plan and deposit, a
+borrowing with a repayment, profile edit, categories, the activity log, help,
+Khmer and dark mode. The Android bundle compiles (`expo export --platform
+android`). Not yet exercised on a device: the report export share sheet, the
+photo picker, the date picker dialogs, and Android back handling.
+
+Still open from Phase 9 and 10: safe-area / keyboard checks on a real phone,
+the 360 px width pass, accessibility labels on every icon-only button, a JDK
+for `expo run:android`, icons and splash, and the release build.
+
+## Running it
+
+```bash
+cd ~/Projects/spendlog && php artisan serve --host=0.0.0.0 --port=8000   # the API
+cd ~/Projects/spendlog_native && npx expo start                          # then scan the QR with Expo Go
+npx expo start --web                                                     # or open it in a browser
+npm run typecheck && npm run lint && npm test
+```
 
 ## Endpoint → hook → screen
 
