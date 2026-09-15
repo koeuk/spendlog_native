@@ -9,7 +9,6 @@ import { Input } from '@/components/Input';
 import { MoneyInput } from '@/components/MoneyInput';
 import { OptionPicker } from '@/components/OptionPicker';
 import { PillButton } from '@/components/PillButton';
-import { Sheet, type SheetRef } from '@/components/Sheet';
 import { useCategories } from '@/hooks/categories';
 import { useDeleteExpense, useSaveExpense } from '@/hooks/expenses';
 import { useForm } from '@/hooks/useForm';
@@ -22,24 +21,15 @@ import { confirm } from '@/utils/confirm';
 import { isFutureYmd, todayYmd } from '@/utils/dates';
 import { amountNumber } from '@/utils/money';
 
-interface ExpenseFormSheetProps {
-  sheetRef: SheetRef;
+interface ExpenseFormProps {
   /** The row being edited, or null for a new one. */
   expense: Expense | null;
-  onDismiss?: () => void;
+  /** Called once the row is saved or deleted; the page leaves. */
+  onDone: () => void;
 }
 
-/** Add or edit one expense. The form mounts fresh each time the sheet opens. */
-export function ExpenseFormSheet({ sheetRef, expense, onDismiss }: ExpenseFormSheetProps) {
-  const t = useT();
-  return (
-    <Sheet sheetRef={sheetRef} title={expense ? t('Edit expense') : t('Add expense')} onDismiss={onDismiss}>
-      <ExpenseForm key={expense?.uuid ?? 'new'} expense={expense} close={() => sheetRef.current?.dismiss()} />
-    </Sheet>
-  );
-}
-
-function ExpenseForm({ expense, close }: { expense: Expense | null; close: () => void }) {
+/** Add or edit one expense. */
+export function ExpenseForm({ expense, onDone }: ExpenseFormProps) {
   const t = useT();
   const money = useMoneySettings();
   const isAdmin = useSessionStore((state) => state.user?.is_admin ?? false);
@@ -72,7 +62,7 @@ function ExpenseForm({ expense, close }: { expense: Expense | null; close: () =>
           },
         });
         toast(t(expense ? 'Expense updated successfully.' : 'Expense added successfully.'), 'success');
-        close();
+        onDone();
       },
       () => ({
         item: form.values.item.trim() ? undefined : t('Name the item.'),
@@ -90,7 +80,7 @@ function ExpenseForm({ expense, close }: { expense: Expense | null; close: () =>
     try {
       await remove.mutateAsync(expense.uuid);
       toast(t('Expense deleted successfully.'), 'success');
-      close();
+      onDone();
     } catch (error) {
       toast(t(apiErrorMessage(error)), 'error');
     }
@@ -98,9 +88,8 @@ function ExpenseForm({ expense, close }: { expense: Expense | null; close: () =>
 
   return (
     <View style={styles.form}>
-      <Input sheet label={t('Item')} value={form.values.item} onChangeText={(text) => form.set('item', text)} error={form.errors.item} autoFocus={!expense} returnKeyType="next" />
+      <Input label={t('Item')} value={form.values.item} onChangeText={(text) => form.set('item', text)} error={form.errors.item} autoFocus={!expense} returnKeyType="next" />
       <MoneyInput
-        sheet
         label={t('Price')}
         value={form.values.price}
         onChangeText={(text) => form.set('price', text)}
@@ -110,7 +99,6 @@ function ExpenseForm({ expense, close }: { expense: Expense | null; close: () =>
       />
       {creatingCategory ? (
         <Input
-          sheet
           label={t('New category')}
           value={form.values.new_category}
           onChangeText={(text) => form.set('new_category', text)}

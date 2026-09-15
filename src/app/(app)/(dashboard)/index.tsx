@@ -13,13 +13,11 @@ import { PillButton } from '@/components/PillButton';
 import { ProgressBar } from '@/components/ProgressBar';
 import { Screen } from '@/components/Screen';
 import { Segmented } from '@/components/Segmented';
-import { useSheet } from '@/components/Sheet';
 import { SpendingChart } from '@/components/SpendingChart';
 import { ErrorState, Skeleton, SkeletonCard } from '@/components/States';
 import { Txt } from '@/components/Txt';
 import { useDashboard, useReport } from '@/hooks/overview';
 import { useT } from '@/i18n';
-import { ExpenseFormSheet } from '@/sheets/ExpenseFormSheet';
 import { useLocaleStore } from '@/store/locale';
 import { useSessionStore } from '@/store/session';
 import { layout } from '@/theme/tokens';
@@ -46,13 +44,7 @@ export default function DashboardScreen() {
   const dashboard = useDashboard(month, month);
   const at = granularity === 'month' ? month : granularity === 'year' ? month.slice(0, 4) : undefined;
   const report = useReport({ period: granularity, at });
-  const formSheet = useSheet();
-  const [editing, setEditing] = useState<Expense | null>(null);
-
-  const openExpense = (expense: Expense | null) => {
-    setEditing(expense);
-    formSheet.present();
-  };
+  const openExpense = (expense: Expense | null) => router.push(expense ? { pathname: '/expense-form', params: { uuid: expense.uuid } } : '/expense-form');
 
   return (
     <>
@@ -105,7 +97,6 @@ export default function DashboardScreen() {
         <View style={{ height: 8 }} />
       </Screen>
       <Fab onPress={() => openExpense(null)} accessibilityLabel={t('Add expense')} />
-      <ExpenseFormSheet sheetRef={formSheet.ref} expense={editing} />
     </>
   );
 }

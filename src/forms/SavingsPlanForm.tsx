@@ -3,7 +3,6 @@ import { StyleSheet, View } from 'react-native';
 import { apiErrorMessage } from '@/api/client';
 import { MoneyInput } from '@/components/MoneyInput';
 import { PillButton } from '@/components/PillButton';
-import { Sheet, type SheetRef } from '@/components/Sheet';
 import { Txt } from '@/components/Txt';
 import { useDeleteSavingsPlan, useSetSavingsPlan } from '@/hooks/savings';
 import { useForm } from '@/hooks/useForm';
@@ -16,23 +15,8 @@ import { confirm } from '@/utils/confirm';
 import { monthLabel } from '@/utils/dates';
 import { amountNumber } from '@/utils/money';
 
-interface SavingsPlanSheetProps {
-  sheetRef: SheetRef;
-  month: Ym;
-  plan: SavingsPlan | null;
-}
-
 /** How much to put aside this month. Upserts the slot, so saving twice just changes it. */
-export function SavingsPlanSheet({ sheetRef, month, plan }: SavingsPlanSheetProps) {
-  const t = useT();
-  return (
-    <Sheet sheetRef={sheetRef} title={plan ? t('Change plan') : t('Set a plan')}>
-      <PlanForm key={`${month}-${plan?.uuid ?? 'none'}`} month={month} plan={plan} close={() => sheetRef.current?.dismiss()} />
-    </Sheet>
-  );
-}
-
-function PlanForm({ month, plan, close }: { month: Ym; plan: SavingsPlan | null; close: () => void }) {
+export function SavingsPlanForm({ month, plan, onDone }: { month: Ym; plan: SavingsPlan | null; onDone: () => void }) {
   const t = useT();
   const locale = useLocaleStore((state) => state.locale);
   const money = useMoneySettings();
@@ -45,7 +29,7 @@ function PlanForm({ month, plan, close }: { month: Ym; plan: SavingsPlan | null;
       async () => {
         await save.mutateAsync({ month, amount: form.values.amount, currency: form.values.currency });
         toast(t('Plan saved.'), 'success');
-        close();
+        onDone();
       },
       () => ({ amount: amountNumber(form.values.amount) >= 0 && form.values.amount !== '' ? undefined : t('Enter an amount.') }),
     );
@@ -57,7 +41,7 @@ function PlanForm({ month, plan, close }: { month: Ym; plan: SavingsPlan | null;
     try {
       await remove.mutateAsync(plan.uuid);
       toast(t('Plan removed.'), 'success');
-      close();
+      onDone();
     } catch (error) {
       toast(t(apiErrorMessage(error)), 'error');
     }
@@ -67,7 +51,6 @@ function PlanForm({ month, plan, close }: { month: Ym; plan: SavingsPlan | null;
     <View style={styles.form}>
       <Txt faint={0.6}>{t('How much to put aside in :month.', { month: monthLabel(month, locale) })}</Txt>
       <MoneyInput
-        sheet
         label={t('Amount')}
         value={form.values.amount}
         onChangeText={(text) => form.set('amount', text)}

@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { ArrowDownToLine, ArrowUpFromLine, PiggyBank } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -11,13 +12,10 @@ import { MonthStepper } from '@/components/MonthStepper';
 import { PillButton } from '@/components/PillButton';
 import { ProgressBar } from '@/components/ProgressBar';
 import { Screen } from '@/components/Screen';
-import { useSheet } from '@/components/Sheet';
 import { EmptyState, ErrorState, SkeletonCard } from '@/components/States';
 import { Txt } from '@/components/Txt';
 import { useSavingsEntries, useSavingsPlan, useSavingsSummary } from '@/hooks/savings';
 import { useT } from '@/i18n';
-import { SavingsEntrySheet } from '@/sheets/SavingsEntrySheet';
-import { SavingsPlanSheet } from '@/sheets/SavingsPlanSheet';
 import { useLocaleStore } from '@/store/locale';
 import { layout } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -29,19 +27,14 @@ import { amountNumber, formatMoney } from '@/utils/money';
 export default function SavingsScreen() {
   const t = useT();
   const theme = useTheme();
+  const router = useRouter();
   const locale = useLocaleStore((state) => state.locale);
   const [month, setMonth] = useState(currentYm());
   const summary = useSavingsSummary(month);
   const entries = useSavingsEntries(month);
   const plan = useSavingsPlan(month);
-  const planSheet = useSheet();
-  const entrySheet = useSheet();
-  const [editing, setEditing] = useState<SavingsEntry | null>(null);
-
-  const openEntry = (entry: SavingsEntry | null) => {
-    setEditing(entry);
-    entrySheet.present();
-  };
+  const openPlan = () => router.push({ pathname: '/savings-plan-form', params: { month } });
+  const openEntry = (entry: SavingsEntry | null) => router.push({ pathname: '/savings-entry-form', params: entry ? { month, uuid: entry.uuid } : { month } });
 
   const refresh = () => {
     void summary.refetch();
@@ -78,7 +71,7 @@ export default function SavingsScreen() {
                 <Txt variant="label" faint={0.6}>
                   {t('Saved this month')}
                 </Txt>
-                <PillButton label={planned > 0 ? t('Change plan') : t('Set a plan')} variant="tonal" size="sm" onPress={planSheet.present} />
+                <PillButton label={planned > 0 ? t('Change plan') : t('Set a plan')} variant="tonal" size="sm" onPress={openPlan} />
               </View>
               <Txt variant="display" color={amountNumber(data.saved_this_month) < 0 ? theme.errorInk : theme.text}>
                 {formatMoney(data.saved_this_month, 'signed')}
@@ -143,8 +136,6 @@ export default function SavingsScreen() {
         ) : null}
       </Screen>
       <Fab onPress={() => openEntry(null)} accessibilityLabel={t('Add to savings')} />
-      <SavingsPlanSheet sheetRef={planSheet.ref} month={month} plan={plan.data ?? null} />
-      <SavingsEntrySheet sheetRef={entrySheet.ref} entry={editing} totalSaved={data?.total_saved ?? '0.00'} />
     </>
   );
 }

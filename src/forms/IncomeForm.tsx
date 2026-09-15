@@ -6,7 +6,6 @@ import { DateField } from '@/components/DateField';
 import { Input } from '@/components/Input';
 import { MoneyInput } from '@/components/MoneyInput';
 import { PillButton } from '@/components/PillButton';
-import { Sheet, type SheetRef } from '@/components/Sheet';
 import { useDeleteIncome, useIncomeSources, useSaveIncome } from '@/hooks/incomes';
 import { useForm } from '@/hooks/useForm';
 import { useMoneySettings } from '@/hooks/useMoneySettings';
@@ -17,22 +16,8 @@ import { confirm } from '@/utils/confirm';
 import { isFutureYmd, todayYmd } from '@/utils/dates';
 import { amountNumber } from '@/utils/money';
 
-interface IncomeFormSheetProps {
-  sheetRef: SheetRef;
-  income: Income | null;
-}
-
 /** Add or edit money coming in. `source` is free text; the chips are what this account used before. */
-export function IncomeFormSheet({ sheetRef, income }: IncomeFormSheetProps) {
-  const t = useT();
-  return (
-    <Sheet sheetRef={sheetRef} title={income ? t('Edit income') : t('Add income')}>
-      <IncomeForm key={income?.uuid ?? 'new'} income={income} close={() => sheetRef.current?.dismiss()} />
-    </Sheet>
-  );
-}
-
-function IncomeForm({ income, close }: { income: Income | null; close: () => void }) {
+export function IncomeForm({ income, onDone }: { income: Income | null; onDone: () => void }) {
   const t = useT();
   const money = useMoneySettings();
   const { data: sources = [] } = useIncomeSources();
@@ -52,7 +37,7 @@ function IncomeForm({ income, close }: { income: Income | null; close: () => voi
         const { source, amount, currency, received_on, note } = form.values;
         await save.mutateAsync({ uuid: income?.uuid, payload: { source: source.trim(), amount, currency, received_on, note: note.trim() || null } });
         toast(t(income ? 'Income updated successfully.' : 'Income added successfully.'), 'success');
-        close();
+        onDone();
       },
       () => ({
         source: form.values.source.trim() ? undefined : t('Name the source.'),
@@ -68,7 +53,7 @@ function IncomeForm({ income, close }: { income: Income | null; close: () => voi
     try {
       await remove.mutateAsync(income.uuid);
       toast(t('Income deleted successfully.'), 'success');
-      close();
+      onDone();
     } catch (error) {
       toast(t(apiErrorMessage(error)), 'error');
     }
@@ -76,10 +61,9 @@ function IncomeForm({ income, close }: { income: Income | null; close: () => voi
 
   return (
     <View style={styles.form}>
-      <Input sheet label={t('Source')} value={form.values.source} onChangeText={(text) => form.set('source', text)} error={form.errors.source} placeholder={t('Salary, freelance, a gift…')} autoFocus={!income} />
+      <Input label={t('Source')} value={form.values.source} onChangeText={(text) => form.set('source', text)} error={form.errors.source} placeholder={t('Salary, freelance, a gift…')} autoFocus={!income} />
       <Chips options={sources.slice(0, 8)} selected={form.values.source} onSelect={(value) => form.set('source', value)} />
       <MoneyInput
-        sheet
         label={t('Amount')}
         value={form.values.amount}
         onChangeText={(text) => form.set('amount', text)}
@@ -88,7 +72,7 @@ function IncomeForm({ income, close }: { income: Income | null; close: () => voi
         error={form.errors.amount}
       />
       <DateField label={t('Received on')} value={form.values.received_on} onChange={(value) => form.set('received_on', value ?? '')} maximumDate={new Date()} error={form.errors.received_on} />
-      <Input sheet label={t('Note')} value={form.values.note} onChangeText={(text) => form.set('note', text)} error={form.errors.note} multiline maxLength={500} />
+      <Input label={t('Note')} value={form.values.note} onChangeText={(text) => form.set('note', text)} error={form.errors.note} multiline maxLength={500} />
       <PillButton label={t('Save')} onPress={submit} loading={form.submitting} block />
       {income ? <PillButton label={t('Delete')} onPress={destroy} loading={remove.isPending} variant="danger" block /> : null}
     </View>

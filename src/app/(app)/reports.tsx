@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { ChevronLeft, ChevronRight, Download, TrendingDown, TrendingUp } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -19,7 +20,6 @@ import { Txt } from '@/components/Txt';
 import { useReport } from '@/hooks/overview';
 import { useExportReport } from '@/hooks/useExportReport';
 import { useT } from '@/i18n';
-import { ExpenseFormSheet } from '@/sheets/ExpenseFormSheet';
 import { toast } from '@/store/toast';
 import { useTheme } from '@/theme/useTheme';
 import type { Expense, ExportFormat, Granularity, Report } from '@/types/api';
@@ -42,14 +42,13 @@ const FORMATS: { value: ExportFormat; label: string }[] = [
 export default function ReportsScreen() {
   const t = useT();
   const theme = useTheme();
+  const router = useRouter();
   const [period, setPeriod] = useState<Granularity>('month');
   const [at, setAt] = useState<string | undefined>(undefined);
   const [page, setPage] = useState(1);
   const report = useReport({ period, at, page, per_page: 20 });
   const exporter = useExportReport();
   const exportSheet = useSheet();
-  const formSheet = useSheet();
-  const [editing, setEditing] = useState<Expense | null>(null);
   const data = report.data;
 
   const choosePeriod = (next: Granularity) => {
@@ -98,10 +97,7 @@ export default function ReportsScreen() {
             <ErrorState error={report.error} onRetry={() => void report.refetch()} compact />
           </Card>
         ) : data ? (
-          <ReportBody data={data} page={page} onPage={setPage} onOpenExpense={(expense) => {
-            setEditing(expense);
-            formSheet.present();
-          }} />
+          <ReportBody data={data} page={page} onPage={setPage} onOpenExpense={(expense) => router.push({ pathname: '/expense-form', params: { uuid: expense.uuid } })} />
         ) : null}
       </Screen>
       <Sheet sheetRef={exportSheet.ref} title={t('Export')}>
@@ -112,7 +108,6 @@ export default function ReportsScreen() {
           ))}
         </View>
       </Sheet>
-      <ExpenseFormSheet sheetRef={formSheet.ref} expense={editing} />
       {exporter.isPending ? <View style={[styles.exporting, { backgroundColor: theme.faint(0.04) }]} /> : null}
     </>
   );

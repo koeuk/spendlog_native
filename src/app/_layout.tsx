@@ -87,6 +87,7 @@ function ThemedRoot() {
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.ground } }}>
         <Stack.Protected guard={signedIn}>
           <Stack.Screen name="(app)" />
+          <Stack.Screen name="(forms)" />
         </Stack.Protected>
         <Stack.Protected guard={!signedIn}>
           <Stack.Screen name="(auth)" />

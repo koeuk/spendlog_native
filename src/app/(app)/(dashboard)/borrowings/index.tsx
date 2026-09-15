@@ -10,12 +10,10 @@ import { Fab } from '@/components/Fab';
 import { Header } from '@/components/Header';
 import { Screen } from '@/components/Screen';
 import { Segmented } from '@/components/Segmented';
-import { useSheet } from '@/components/Sheet';
 import { EmptyState, ErrorState, SkeletonCard } from '@/components/States';
 import { Txt } from '@/components/Txt';
 import { useBorrowingSummary, useBorrowings } from '@/hooks/borrowings';
 import { useT } from '@/i18n';
-import { BorrowingFormSheet } from '@/sheets/BorrowingFormSheet';
 import { layout } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { formatMoney } from '@/utils/money';
@@ -28,7 +26,7 @@ export default function BorrowingsScreen() {
   const [status, setStatus] = useState<BorrowingStatusFilter>('all');
   const summary = useBorrowingSummary();
   const list = useBorrowings({ status });
-  const sheet = useSheet();
+  const openForm = () => router.push('/borrowing-form');
 
   return (
     <>
@@ -103,14 +101,13 @@ export default function BorrowingsScreen() {
             ) : list.isError ? (
               <ErrorState error={list.error} onRetry={() => void list.refetch()} />
             ) : (
-              <EmptyState icon={Handshake} title={status === 'all' ? t('No borrowing yet, add your first one.') : t('Nothing found.')} actionLabel={status === 'all' ? t('Add borrowing') : undefined} onAction={sheet.present} />
+              <EmptyState icon={Handshake} title={status === 'all' ? t('No borrowing yet, add your first one.') : t('Nothing found.')} actionLabel={status === 'all' ? t('Add borrowing') : undefined} onAction={openForm} />
             )
           }
           ListFooterComponent={list.isFetchingNextPage ? <ActivityIndicator color={theme.accent} style={styles.footer} /> : <View style={styles.footer} />}
         />
       </Screen>
-      <Fab onPress={sheet.present} accessibilityLabel={t('Add borrowing')} />
-      <BorrowingFormSheet sheetRef={sheet.ref} borrowing={null} />
+      <Fab onPress={openForm} accessibilityLabel={t('Add borrowing')} />
     </>
   );
 }

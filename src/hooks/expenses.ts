@@ -10,7 +10,7 @@ export function useExpenses(filters: ExpenseFilters, enabled = true) {
 }
 
 export function useExpense(uuid: string) {
-  return useQuery({ queryKey: keys.expense(uuid), queryFn: () => getExpense(uuid) });
+  return useQuery({ queryKey: keys.expense(uuid), queryFn: () => getExpense(uuid), enabled: uuid !== '' });
 }
 
 /** Create when there is no uuid, update otherwise; both disturb the same totals. */

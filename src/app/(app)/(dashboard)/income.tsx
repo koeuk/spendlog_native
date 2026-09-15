@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { Banknote, Repeat } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
@@ -11,12 +12,10 @@ import { ListRow } from '@/components/ListRow';
 import { MonthStepper } from '@/components/MonthStepper';
 import { ProgressBar } from '@/components/ProgressBar';
 import { Screen } from '@/components/Screen';
-import { useSheet } from '@/components/Sheet';
 import { EmptyState, ErrorState, SkeletonCard } from '@/components/States';
 import { Txt } from '@/components/Txt';
 import { useDeleteIncome, useIncomeSummary, useIncomes } from '@/hooks/incomes';
 import { useT } from '@/i18n';
-import { IncomeFormSheet } from '@/sheets/IncomeFormSheet';
 import { useLocaleStore } from '@/store/locale';
 import { toast } from '@/store/toast';
 import { layout } from '@/theme/tokens';
@@ -31,20 +30,16 @@ import { amountNumber, formatMoney } from '@/utils/money';
 export default function IncomeScreen() {
   const t = useT();
   const theme = useTheme();
+  const router = useRouter();
   const locale = useLocaleStore((state) => state.locale);
   const [month, setMonth] = useState(currentYm());
   const bounds = monthBounds(month);
   const summary = useIncomeSummary(month);
   const list = useIncomes({ from: bounds.from, to: bounds.to });
   const remove = useDeleteIncome();
-  const sheet = useSheet();
-  const [editing, setEditing] = useState<Income | null>(null);
   const groups = useMemo(() => groupConsecutive(list.items, (income) => income.received_on), [list.items]);
 
-  const open = (income: Income | null) => {
-    setEditing(income);
-    sheet.present();
-  };
+  const open = (income: Income | null) => router.push(income ? { pathname: '/income-form', params: { uuid: income.uuid } } : '/income-form');
 
   const destroy = async (income: Income) => {
     const ok = await confirm({ title: t('Delete this income?'), message: `${income.source} · ${formatMoney(income.amount)}`, confirmLabel: t('Delete'), destructive: true });
@@ -152,7 +147,6 @@ export default function IncomeScreen() {
         />
       </Screen>
       <Fab onPress={() => open(null)} accessibilityLabel={t('Add income')} />
-      <IncomeFormSheet sheetRef={sheet.ref} income={editing} />
     </>
   );
 }

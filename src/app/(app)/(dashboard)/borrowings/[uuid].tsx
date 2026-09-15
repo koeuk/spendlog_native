@@ -10,13 +10,10 @@ import { ListRow } from '@/components/ListRow';
 import { PillButton } from '@/components/PillButton';
 import { ProgressBar } from '@/components/ProgressBar';
 import { Screen } from '@/components/Screen';
-import { useSheet } from '@/components/Sheet';
 import { ErrorState, SkeletonCard } from '@/components/States';
 import { Txt } from '@/components/Txt';
 import { useBorrowing, useDeleteBorrowing, useDeleteRepayment, useLenderOptions } from '@/hooks/borrowings';
 import { useT } from '@/i18n';
-import { BorrowingFormSheet } from '@/sheets/BorrowingFormSheet';
-import { RepaymentSheet } from '@/sheets/RepaymentSheet';
 import { useLocaleStore } from '@/store/locale';
 import { toast } from '@/store/toast';
 import { useTheme } from '@/theme/useTheme';
@@ -36,8 +33,6 @@ export default function BorrowingDetailScreen() {
   const { data: options } = useLenderOptions();
   const removeBorrowing = useDeleteBorrowing();
   const removeRepayment = useDeleteRepayment();
-  const editSheet = useSheet();
-  const repaySheet = useSheet();
   const borrowing = query.data;
   const typeLabel = options?.types.find((type) => type.value === borrowing?.lender_type)?.label ?? borrowing?.lender_type ?? '';
 
@@ -73,7 +68,7 @@ export default function BorrowingDetailScreen() {
         refreshing={query.isRefetching && !query.isPending}
         onRefresh={() => void query.refetch()}
         contentContainerStyle={styles.content}
-        header={<Header title={borrowing?.lender ?? t('Borrowing')} back right={borrowing ? <IconButton icon={Pencil} onPress={editSheet.present} accessibilityLabel={t('Edit')} /> : undefined} />}>
+        header={<Header title={borrowing?.lender ?? t('Borrowing')} back right={borrowing ? <IconButton icon={Pencil} onPress={() => router.push({ pathname: '/borrowing-form', params: { uuid } })} accessibilityLabel={t('Edit')} /> : undefined} />}>
         {query.isPending ? (
           <SkeletonCard lines={4} />
         ) : query.isError ? (
@@ -107,7 +102,7 @@ export default function BorrowingDetailScreen() {
                   </Txt>
                 </View>
               ) : (
-                <PillButton label={t('Add repayment')} icon={Plus} onPress={repaySheet.present} block />
+                <PillButton label={t('Add repayment')} icon={Plus} onPress={() => router.push({ pathname: '/repayment-form', params: { uuid } })} block />
               )}
             </Card>
 
@@ -136,12 +131,6 @@ export default function BorrowingDetailScreen() {
           </>
         ) : null}
       </Screen>
-      {borrowing ? (
-        <>
-          <BorrowingFormSheet sheetRef={editSheet.ref} borrowing={borrowing} />
-          <RepaymentSheet sheetRef={repaySheet.ref} borrowing={borrowing} />
-        </>
-      ) : null}
     </>
   );
 }

@@ -31,7 +31,7 @@ export function useLenderOptions() {
 }
 
 export function useBorrowing(uuid: string) {
-  return useQuery({ queryKey: keys.borrowing(uuid), queryFn: () => getBorrowing(uuid) });
+  return useQuery({ queryKey: keys.borrowing(uuid), queryFn: () => getBorrowing(uuid), enabled: uuid !== '' });
 }
 
 export function useSaveBorrowing() {

@@ -7,7 +7,6 @@ import { Input } from '@/components/Input';
 import { MoneyInput } from '@/components/MoneyInput';
 import { PillButton } from '@/components/PillButton';
 import { Segmented } from '@/components/Segmented';
-import { Sheet, type SheetRef } from '@/components/Sheet';
 import { Txt } from '@/components/Txt';
 import { useIncomeSources } from '@/hooks/incomes';
 import { useDeleteSavingsEntry, useSaveSavingsEntry } from '@/hooks/savings';
@@ -20,24 +19,15 @@ import { confirm } from '@/utils/confirm';
 import { isFutureYmd, todayYmd } from '@/utils/dates';
 import { amountNumber, formatMoney } from '@/utils/money';
 
-interface SavingsEntrySheetProps {
-  sheetRef: SheetRef;
+interface SavingsEntryFormProps {
   entry: SavingsEntry | null;
   /** The all-time balance, so a withdrawal can be checked before the server does. */
   totalSaved: string;
+  onDone: () => void;
 }
 
 /** A deposit into savings, or a withdrawal out of it. */
-export function SavingsEntrySheet({ sheetRef, entry, totalSaved }: SavingsEntrySheetProps) {
-  const t = useT();
-  return (
-    <Sheet sheetRef={sheetRef} title={entry ? t('Edit entry') : t('Add to savings')}>
-      <EntryForm key={entry?.uuid ?? 'new'} entry={entry} totalSaved={totalSaved} close={() => sheetRef.current?.dismiss()} />
-    </Sheet>
-  );
-}
-
-function EntryForm({ entry, totalSaved, close }: { entry: SavingsEntry | null; totalSaved: string; close: () => void }) {
+export function SavingsEntryForm({ entry, totalSaved, onDone }: SavingsEntryFormProps) {
   const t = useT();
   const money = useMoneySettings();
   const { data: sources = [] } = useIncomeSources();
@@ -62,7 +52,7 @@ function EntryForm({ entry, totalSaved, close }: { entry: SavingsEntry | null; t
           payload: { type, amount, currency, source: type === 'deposit' ? source.trim() || null : null, saved_on, note: note.trim() || null },
         });
         toast(t(entry ? 'Entry updated.' : type === 'deposit' ? 'Deposit added.' : 'Withdrawal added.'), 'success');
-        close();
+        onDone();
       },
       () => ({
         amount: amountNumber(form.values.amount) > 0 ? undefined : t('Enter an amount.'),
@@ -77,7 +67,7 @@ function EntryForm({ entry, totalSaved, close }: { entry: SavingsEntry | null; t
     try {
       await remove.mutateAsync(entry.uuid);
       toast(t('Entry deleted.'), 'success');
-      close();
+      onDone();
     } catch (error) {
       toast(t(apiErrorMessage(error)), 'error');
     }
@@ -94,7 +84,6 @@ function EntryForm({ entry, totalSaved, close }: { entry: SavingsEntry | null; t
         onChange={(type) => form.set('type', type)}
       />
       <MoneyInput
-        sheet
         label={t('Amount')}
         value={form.values.amount}
         onChangeText={(text) => form.set('amount', text)}
@@ -106,12 +95,12 @@ function EntryForm({ entry, totalSaved, close }: { entry: SavingsEntry | null; t
       />
       {withdrawing ? null : (
         <>
-          <Input sheet label={t('From')} value={form.values.source} onChangeText={(text) => form.set('source', text)} placeholder={t('Where this came from (optional)')} maxLength={255} />
+          <Input label={t('From')} value={form.values.source} onChangeText={(text) => form.set('source', text)} placeholder={t('Where this came from (optional)')} maxLength={255} />
           <Chips options={sources.slice(0, 8)} selected={form.values.source} onSelect={(value) => form.set('source', value)} />
         </>
       )}
       <DateField label={t('Date')} value={form.values.saved_on} onChange={(value) => form.set('saved_on', value ?? '')} maximumDate={new Date()} error={form.errors.saved_on} />
-      <Input sheet label={t('Note')} value={form.values.note} onChangeText={(text) => form.set('note', text)} multiline maxLength={500} />
+      <Input label={t('Note')} value={form.values.note} onChangeText={(text) => form.set('note', text)} multiline maxLength={500} />
       <PillButton label={t('Save')} onPress={submit} loading={form.submitting} block />
       {entry ? <PillButton label={t('Delete')} onPress={destroy} loading={remove.isPending} variant="danger" block /> : null}
       {withdrawing ? (

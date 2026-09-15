@@ -80,6 +80,13 @@ spendlog_native/
     (app)/(profile)/activity.tsx
     (app)/(profile)/admin-users.tsx
     (app)/(profile)/admin-settings.tsx
+    (forms)/_layout.tsx             # Stack above the tabs: full-screen create / edit pages
+    (forms)/expense-form.tsx        # ?uuid= edits; expenses, income, savings and borrowing
+    (forms)/income-form.tsx         #   open as pages with a back button and title, not sheets
+    (forms)/savings-plan-form.tsx   # ?month=
+    (forms)/savings-entry-form.tsx  # ?month=&uuid=
+    (forms)/borrowing-form.tsx
+    (forms)/repayment-form.tsx      # ?uuid=<borrowing>
   src/
     api/client.ts               # axios instance, interceptors, apiErrorMessage()
     api/env.ts                  # base URL resolution (table above)
@@ -89,9 +96,11 @@ spendlog_native/
     store/session.ts, locale.ts, theme.ts
     theme/tokens.ts, glass.ts   # colours, radii, blur presets
     i18n/index.ts, km.json      # t(key) — English key, Khmer value
-    components/                 # GlassPane, PillButton, MoneyInput, MonthStepper, SpendingChart …
-    sheets/                     # ExpenseFormSheet, IncomeFormSheet, RecurringFormSheet, SavingsPlanSheet,
-                                # SavingsEntrySheet, BorrowingFormSheet, RepaymentSheet, MenuSheet
+    components/                 # FormScreen (the create / edit frame), PillButton, MoneyInput, MonthStepper …
+    forms/                      # ExpenseForm, IncomeForm, SavingsPlanForm, SavingsEntryForm, BorrowingForm,
+                                # RepaymentForm — the bodies the (forms) pages render
+    sheets/                     # Still bottom sheets: BudgetSheet, RecurringFormSheet, CategoryFormSheet,
+                                # FaqSheet, AdminUserSheet, ProfileSheet, PasswordSheet, MenuSheet, ExpenseFilterSheet
     utils/money.ts, dates.ts, categoryStyle.ts
   assets/fonts, assets/images
   DEVELOPMENT_PLAN.md
@@ -259,6 +268,11 @@ borrowing with a repayment, profile edit, categories, the activity log, help,
 Khmer and dark mode. The Android bundle compiles (`expo export --platform
 android`). Not yet exercised on a device: the report export share sheet, the
 photo picker, the date picker dialogs, and Android back handling.
+
+Expense, income, savings (plan and entry) and borrowing (form and repayment)
+now open as full pages under `(forms)` with a back button and a title; the
+Playwright flow at 360 px walks all sixteen open / save / edit steps. Budget,
+recurring, category, FAQ, user, profile and password stay as bottom sheets.
 
 The 360 px width pass and the accessibility-label audit are done (Phase 9).
 Still open: safe-area / keyboard checks on a real phone, a JDK for

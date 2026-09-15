@@ -3,6 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   createIncome,
   deleteIncome,
+  getIncome,
   getIncomeSummary,
   listIncomeSources,
   listIncomes,
@@ -17,6 +18,10 @@ import { useInfiniteList } from './useInfiniteList';
 
 export function useIncomes(filters: IncomeFilters) {
   return useInfiniteList(keys.incomes(filters), (page) => listIncomes(filters, page));
+}
+
+export function useIncome(uuid: string) {
+  return useQuery({ queryKey: keys.income(uuid), queryFn: () => getIncome(uuid), enabled: uuid !== '' });
 }
 
 export function useIncomeSummary(month: Ym) {

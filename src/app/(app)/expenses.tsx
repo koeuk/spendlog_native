@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { Search, SlidersHorizontal, X } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
@@ -17,7 +18,6 @@ import { useDeleteExpense, useExpenses } from '@/hooks/expenses';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useT } from '@/i18n';
 import { DEFAULT_EXPENSE_FILTERS, ExpenseFilterSheet, hasExpenseFilters, type ExpenseListFilters } from '@/sheets/ExpenseFilterSheet';
-import { ExpenseFormSheet } from '@/sheets/ExpenseFormSheet';
 import { useLocaleStore } from '@/store/locale';
 import { useSessionStore } from '@/store/session';
 import { toast } from '@/store/toast';
@@ -46,6 +46,7 @@ function groupByDay(expenses: Expense[]): DayGroup[] {
 export default function ExpensesScreen() {
   const t = useT();
   const theme = useTheme();
+  const router = useRouter();
   const locale = useLocaleStore((state) => state.locale);
   const isAdmin = useSessionStore((state) => state.user?.is_admin ?? false);
   const [search, setSearch] = useState('');
@@ -60,18 +61,13 @@ export default function ExpensesScreen() {
     scope: isAdmin && filters.everyone ? 'all' : undefined,
   });
   const remove = useDeleteExpense();
-  const formSheet = useSheet();
   const filterSheet = useSheet();
-  const [editing, setEditing] = useState<Expense | null>(null);
 
   // Grouping by day only reads right when the list is in date order.
   const byDate = filters.sort.endsWith('spent_on');
   const groups = useMemo(() => (byDate ? groupByDay(query.items) : [{ day: '', expenses: query.items }]), [byDate, query.items]);
 
-  const openExpense = (expense: Expense | null) => {
-    setEditing(expense);
-    formSheet.present();
-  };
+  const openExpense = (expense: Expense | null) => router.push(expense ? { pathname: '/expense-form', params: { uuid: expense.uuid } } : '/expense-form');
 
   const destroy = async (expense: Expense) => {
     const ok = await confirm({ title: t('Delete this expense?'), message: `${expense.item} · ${expense.price}`, confirmLabel: t('Delete'), destructive: true });
@@ -163,7 +159,6 @@ export default function ExpensesScreen() {
         />
       </Screen>
       <Fab onPress={() => openExpense(null)} accessibilityLabel={t('Add expense')} />
-      <ExpenseFormSheet sheetRef={formSheet.ref} expense={editing} />
       <ExpenseFilterSheet sheetRef={filterSheet.ref} filters={filters} onChange={setFilters} isAdmin={isAdmin} />
     </>
   );
