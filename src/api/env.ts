@@ -33,6 +33,10 @@ export function apiOrigin(): string {
 
 export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? `${apiOrigin()}/api/v1`;
 
+if (__DEV__) {
+  console.log(`[SpendLog] API_BASE_URL: ${API_BASE_URL}`);
+}
+
 /**
  * The server builds asset URLs (logo, avatars) from its own APP_URL, which in
  * development is 127.0.0.1: reachable from the server, not from a phone.

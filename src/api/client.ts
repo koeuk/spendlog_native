@@ -1,15 +1,20 @@
-import axios, { isAxiosError } from 'axios';
+import axios, { isAxiosError } from "axios";
 
-import { API_BASE_URL } from './env';
+import { API_BASE_URL } from "./env";
 
 /**
  * Endpoints reachable without a token. A `401` from one of these says nothing
  * about a stored session, so it must not sign anyone out.
  */
-export const PUBLIC_PATHS = new Set(['/login', '/register', '/forgot-password', '/reset-password']);
+export const PUBLIC_PATHS = new Set([
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+]);
 
 let token: string | null = null;
-let locale = 'en';
+let locale = "en";
 const unauthorizedListeners = new Set<() => void>();
 
 export function setAuthToken(next: string | null): void {
@@ -44,18 +49,25 @@ export function onUnauthorized(listener: () => void): () => void {
 export const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 20_000,
-  headers: { Accept: 'application/json' },
+  headers: { Accept: "application/json" },
 });
 
 api.interceptors.request.use((config) => {
-  if (token) config.headers.set('Authorization', `Bearer ${token}`);
-  config.headers.set('Accept-Language', locale);
+  if (token) config.headers.set("Authorization", `Bearer ${token}`);
+  config.headers.set("Accept-Language", locale);
   return config;
 });
 
 api.interceptors.response.use(undefined, (error: unknown) => {
+  if (__DEV__ && isAxiosError(error)) {
+    console.warn(
+      `[API Error] ${error.config?.method?.toUpperCase()} ${error.config?.baseURL ?? ""}${error.config?.url ?? ""} ->`,
+      error.message,
+      error.code,
+    );
+  }
   if (isAxiosError(error) && error.response?.status === 401) {
-    const path = (error.config?.url ?? '').replace(/\?.*$/, '');
+    const path = (error.config?.url ?? "").replace(/\?.*$/, "");
     if (!PUBLIC_PATHS.has(path)) {
       token = null;
       for (const listener of unauthorizedListeners) listener();
@@ -69,8 +81,9 @@ export interface ApiErrorBody {
   errors?: Record<string, string[]>;
 }
 
-export const GENERIC_ERROR_MESSAGE = 'Something went wrong.';
-export const NETWORK_ERROR_MESSAGE = 'Cannot reach the server. Check your connection.';
+export const GENERIC_ERROR_MESSAGE = "Something went wrong.";
+export const NETWORK_ERROR_MESSAGE =
+  "Cannot reach the server. Check your connection.";
 
 export function errorStatus(error: unknown): number | null {
   return isAxiosError(error) ? (error.response?.status ?? null) : null;
@@ -79,7 +92,7 @@ export function errorStatus(error: unknown): number | null {
 export function errorBody(error: unknown): ApiErrorBody | null {
   if (!isAxiosError(error)) return null;
   const data: unknown = error.response?.data;
-  return data && typeof data === 'object' ? (data as ApiErrorBody) : null;
+  return data && typeof data === "object" ? (data as ApiErrorBody) : null;
 }
 
 export function isNetworkError(error: unknown): boolean {
@@ -91,7 +104,10 @@ export function isNetworkError(error: unknown): boolean {
  * errors first, then the top-level message, then a fallback. The fixed strings
  * are English keys so `t()` can translate them; server text passes through.
  */
-export function apiErrorMessage(error: unknown, fallback = GENERIC_ERROR_MESSAGE): string {
+export function apiErrorMessage(
+  error: unknown,
+  fallback = GENERIC_ERROR_MESSAGE,
+): string {
   const body = errorBody(error);
   if (body?.errors) {
     for (const messages of Object.values(body.errors)) {
