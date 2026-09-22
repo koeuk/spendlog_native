@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
-import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useT } from '@/i18n';
@@ -31,12 +31,13 @@ export function FormScreen({ title, children, loading = false, error, onRetry, m
   const theme = useTheme();
   const t = useT();
   const insets = useSafeAreaInsets();
+  const raised = useKeyboardRaised();
 
   return (
     <View style={[styles.root, { backgroundColor: theme.ground, paddingTop: insets.top }]}>
       <Header title={title} back />
-      <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={insets.top + 52}>
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]}>
+      <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: (raised ? 0 : insets.bottom) + 24 }]}>
           {loading ? (
             <SkeletonCard lines={4} />
           ) : error ? (
@@ -54,6 +55,20 @@ export function FormScreen({ title, children, loading = false, error, onRetry, m
       </KeyboardAvoidingView>
     </View>
   );
+}
+
+/** True while the keyboard is up, so the page stops reserving the home-indicator inset it already covers. */
+function useKeyboardRaised(): boolean {
+  const [raised, setRaised] = useState(false);
+  useEffect(() => {
+    const show = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setRaised(true));
+    const hide = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setRaised(false));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+  return raised;
 }
 
 /** Leave a form page: back to where it was opened from, or home when it was deep-linked. */
