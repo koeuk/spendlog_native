@@ -2,11 +2,15 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 
 import {
   createIncome,
+  createIncomeSource,
   deleteIncome,
+  deleteIncomeSource,
   getIncome,
   getIncomeSummary,
+  listIncomeSourceCatalog,
   listIncomeSources,
   listIncomes,
+  renameIncomeSource,
   updateIncome,
   type IncomeFilters,
   type IncomePayload,
@@ -30,6 +34,25 @@ export function useIncomeSummary(month: Ym) {
 
 export function useIncomeSources() {
   return useQuery({ queryKey: keys.incomeSources, queryFn: listIncomeSources, staleTime: 60_000 });
+}
+
+/** The catalogue as rows, for the Sources screen. */
+export function useIncomeSourceCatalog() {
+  return useQuery({ queryKey: keys.incomeSourceCatalog, queryFn: listIncomeSourceCatalog });
+}
+
+export function useSaveIncomeSource() {
+  return useMutation({
+    mutationFn: ({ uuid, name, rewriteIncomes = false }: { uuid?: string; name: string; rewriteIncomes?: boolean }) =>
+      uuid ? renameIncomeSource(uuid, name, rewriteIncomes) : createIncomeSource(name),
+    // A rename that carries the income across rewrites those rows, so this
+    // touches everything an income save would.
+    onSuccess: () => invalidate(...touches.income),
+  });
+}
+
+export function useDeleteIncomeSource() {
+  return useMutation({ mutationFn: deleteIncomeSource, onSuccess: () => invalidate(...touches.income) });
 }
 
 export function useSaveIncome() {

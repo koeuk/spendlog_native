@@ -181,6 +181,23 @@ export interface Income {
   updated_at: string;
 }
 
+/**
+ * One name in the account's source catalogue — what the income and savings
+ * deposit forms offer, and what the Sources screen manages.
+ *
+ * A suggestion, not a key: an income carries the name as text, so renaming or
+ * removing this row need not touch the income filed under it.
+ */
+export interface IncomeSource {
+  uuid: string;
+  name: string;
+  /** How much income carries this name; 0 for one nothing has used yet. */
+  uses: number;
+  /** What that income adds up to, "0.00" when there is none. */
+  total: Money;
+  created_at: string;
+}
+
 export interface IncomeSummary {
   month: Ym;
   total: Money;

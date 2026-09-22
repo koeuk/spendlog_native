@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { Banknote, Handshake, History, Moon, PiggyBank, Repeat, Settings, Sun, Tags, Users, type LucideIcon } from 'lucide-react-native';
+import { Banknote, Handshake, History, Moon, PiggyBank, Repeat, Settings, Sun, Tag, Tags, Users, type LucideIcon } from 'lucide-react-native';
 import { StyleSheet, Switch, View } from 'react-native';
 
 import { ListRow } from '@/components/ListRow';
@@ -23,6 +23,7 @@ const ENTRIES: Entry[] = [
   { icon: Repeat, label: 'Recurring', path: '/recurring' },
   { icon: Handshake, label: 'Borrowing', path: '/borrowings' },
   { icon: Tags, label: 'Categories', path: '/categories' },
+  { icon: Tag, label: 'Sources', path: '/income-sources' },
   { icon: History, label: 'Activity log', path: '/activity' },
   { icon: Settings, label: 'Settings', path: '/settings' },
   { icon: Users, label: 'Users', path: '/admin-users', admin: true },

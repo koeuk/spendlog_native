@@ -22,6 +22,7 @@ export const keys = {
   incomes: (filters: IncomeFilters) => ['incomes', 'list', filters] as const,
   incomeSummary: (month: Ym) => ['incomes', 'summary', month] as const,
   incomeSources: ['incomes', 'sources'] as const,
+  incomeSourceCatalog: ['incomes', 'sources', 'catalog'] as const,
   income: (uuid: string) => ['incomes', 'one', uuid] as const,
   recurring: (kind?: RecurringKind) => ['recurring', kind ?? 'all'] as const,
   savingsSummary: (month: Ym) => ['savings', 'summary', month] as const,
