@@ -176,7 +176,7 @@ function DashboardBody({ data, month, onOpenExpense }: { data: Dashboard; month:
                 {t('Saved this month')}
               </Txt>
               <Txt variant="heading">
-                {formatMoney(data.savings.saved_this_month, 'signed')}
+                {formatMoney(data.savings.saved_this_month)}
                 {plannedSavings ? <Txt faint={0.5}> {t('of')} {formatMoney(data.savings.planned)}</Txt> : null}
               </Txt>
             </View>

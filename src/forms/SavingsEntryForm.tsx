@@ -15,7 +15,7 @@ import { useMoneySettings } from '@/hooks/useMoneySettings';
 import { useT } from '@/i18n';
 import { toast } from '@/store/toast';
 import type { Currency, SavingsEntry, SavingsEntryType } from '@/types/api';
-import { confirm } from '@/utils/confirm';
+import { choose, confirm } from '@/utils/confirm';
 import { isFutureYmd, todayYmd } from '@/utils/dates';
 import { amountNumber, formatMoney } from '@/utils/money';
 
@@ -24,18 +24,27 @@ interface SavingsEntryFormProps {
   /** The all-time balance, so a withdrawal can be checked before the server does. */
   totalSaved: string;
   onDone: () => void;
+  /**
+   * Start over on a fresh entry of this kind, carrying the amount across —
+   * the way out of turning a deposit into a withdrawal when what was wanted
+   * was a withdrawal *as well*.
+   */
+  onAddInstead?: (type: SavingsEntryType, amount: string) => void;
+  /** Preselect the toggle and prefill the amount on a new entry. */
+  initialType?: SavingsEntryType;
+  initialAmount?: string;
 }
 
 /** A deposit into savings, or a withdrawal out of it. */
-export function SavingsEntryForm({ entry, totalSaved, onDone }: SavingsEntryFormProps) {
+export function SavingsEntryForm({ entry, totalSaved, onDone, onAddInstead, initialType, initialAmount }: SavingsEntryFormProps) {
   const t = useT();
   const money = useMoneySettings();
   const { data: sources = [] } = useIncomeSources();
   const save = useSaveSavingsEntry();
   const remove = useDeleteSavingsEntry();
   const form = useForm({
-    type: entry?.type ?? ('deposit' as SavingsEntryType),
-    amount: entry?.amount ?? '',
+    type: entry?.type ?? initialType ?? ('deposit' as SavingsEntryType),
+    amount: entry?.amount ?? initialAmount ?? '',
     currency: (entry ? 'USD' : money.default_currency) as Currency,
     source: entry?.source ?? '',
     saved_on: entry?.saved_on ?? todayYmd(),
@@ -43,9 +52,33 @@ export function SavingsEntryForm({ entry, totalSaved, onDone }: SavingsEntryForm
   });
   const withdrawing = form.values.type === 'withdraw';
 
+  /**
+   * Flipping a saved entry's direction rewrites that row; it does not add the
+   * opposite movement. That is a correction — "I logged this the wrong way
+   * round" — and rarely what someone reaching for Withdraw on a deposit they
+   * just made meant, so it asks, and offers the other reading.
+   */
+  const confirmFlip = async (): Promise<boolean> => {
+    if (!entry || form.values.type === entry.type) return true;
+
+    const toWithdrawal = form.values.type === 'withdraw';
+    const answer = await choose({
+      title: toWithdrawal ? t('Turn this deposit into a withdrawal?') : t('Turn this withdrawal into a deposit?'),
+      message: `${formatMoney(entry.amount)}\n\n${t('This replaces that entry. It does not add the opposite one.')}`,
+      confirmLabel: t('Replace it'),
+      altLabel: toWithdrawal ? t('Add a withdrawal instead') : t('Add a deposit instead'),
+    });
+
+    if (answer === 'alt') onAddInstead?.(form.values.type, form.values.amount);
+
+    return answer === 'confirm';
+  };
+
   const submit = () =>
     form.submit(
       async () => {
+        if (!(await confirmFlip())) return;
+
         const { type, amount, currency, source, saved_on, note } = form.values;
         await save.mutateAsync({
           uuid: entry?.uuid,

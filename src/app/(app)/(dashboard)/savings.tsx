@@ -20,7 +20,7 @@ import { useLocaleStore } from '@/store/locale';
 import { layout } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import type { SavingsEntry, SavingsStatus } from '@/types/api';
-import { currentYm, dayLabel } from '@/utils/dates';
+import { currentYm, dayLabel, monthLabel } from '@/utils/dates';
 import { amountNumber, formatMoney } from '@/utils/money';
 
 /** A monthly plan and the ledger behind it; the balance carries over between months. */
@@ -51,6 +51,12 @@ export default function SavingsScreen() {
   const data = summary.data;
   const planned = amountNumber(data?.planned);
 
+  // "this month" only while it really is. The stepper can sit on any month,
+  // and a label that goes on claiming the present while August is on screen is
+  // worse than no label at all.
+  const thisMonth = month === currentYm();
+  const named = monthLabel(month, locale);
+
   return (
     <>
       <Screen scroll refreshing={summary.isRefetching && !summary.isPending} onRefresh={refresh} bottomInset={layout.fabClearance} contentContainerStyle={styles.content} header={<Header title={t('Savings')} back />}>
@@ -69,12 +75,12 @@ export default function SavingsScreen() {
             <Card style={styles.section}>
               <View style={styles.rowBetween}>
                 <Txt variant="label" faint={0.6}>
-                  {t('Saved this month')}
+                  {thisMonth ? t('Saved this month') : t('Saved in :month', { month: named })}
                 </Txt>
                 <PillButton label={planned > 0 ? t('Change plan') : t('Set a plan')} variant="tonal" size="sm" onPress={openPlan} />
               </View>
-              <Txt variant="display" color={amountNumber(data.saved_this_month) < 0 ? theme.errorInk : theme.text}>
-                {formatMoney(data.saved_this_month, 'signed')}
+              <Txt variant="display">
+                {formatMoney(data.saved_this_month)}
                 {planned > 0 ? (
                   <Txt variant="heading" faint={0.5}>
                     {' '}
@@ -91,7 +97,7 @@ export default function SavingsScreen() {
                 </>
               ) : (
                 <Txt variant="label" faint={0.55}>
-                  {t('No plan for this month yet.')}
+                  {thisMonth ? t('No plan for this month yet.') : t('No plan for :month yet.', { month: named })}
                 </Txt>
               )}
             </Card>
@@ -101,7 +107,13 @@ export default function SavingsScreen() {
               </Txt>
               <Txt variant="xl">{formatMoney(data.total_saved, 'signed')}</Txt>
               <Txt variant="label" faint={0.5}>
-                {data.entries_count === 1 ? t('1 entry this month') : t(':count entries this month', { count: data.entries_count })}
+                {thisMonth
+                  ? data.entries_count === 1
+                    ? t('1 entry this month')
+                    : t(':count entries this month', { count: data.entries_count })
+                  : data.entries_count === 1
+                    ? t('1 entry in :month', { month: named })
+                    : t(':count entries in :month', { count: data.entries_count, month: named })}
               </Txt>
             </Card>
           </>
@@ -114,7 +126,7 @@ export default function SavingsScreen() {
             <ErrorState error={entries.error} onRetry={refresh} compact />
           </Card>
         ) : entries.data && entries.data.length === 0 ? (
-          <EmptyState icon={PiggyBank} title={t('Nothing saved this month yet.')} actionLabel={t('Add to savings')} onAction={() => openEntry(null)} compact />
+          <EmptyState icon={PiggyBank} title={thisMonth ? t('Nothing saved this month yet.') : t('Nothing saved in :month.', { month: named })} actionLabel={t('Add to savings')} onAction={() => openEntry(null)} compact />
         ) : entries.data ? (
           <Card padded={false} style={styles.card}>
             {entries.data.map((entry, index) => {

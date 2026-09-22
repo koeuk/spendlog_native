@@ -150,6 +150,7 @@ export interface BreakdownSlice {
 export interface DashboardSavings {
   month: Ym;
   planned: Money;
+  /** The month's plan after what came back out; never negative. See SavingsSummary. */
   saved_this_month: Money;
   percent: number;
   total_saved: Money;
@@ -207,6 +208,14 @@ export interface RecurringRule {
 export interface SavingsSummary {
   month: Ym;
   planned: Money;
+  /**
+   * How much of the month's plan is standing, after what came back out. A
+   * withdrawal spends the month's headroom — the part of `planned` the
+   * deposits have not covered yet — before it touches the deposits
+   * themselves, so $100 put against a $150 plan and $80 taken back out leaves
+   * "70.00". Floored at "0.00", so never negative. See SavingsSummary in the
+   * backend for why.
+   */
   saved_this_month: Money;
   remaining: Money;
   percent: number;
