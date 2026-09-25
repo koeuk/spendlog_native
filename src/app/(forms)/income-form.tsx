@@ -11,10 +11,11 @@ export default function IncomeFormScreen() {
   const leave = useLeaveForm();
   const { uuid = '' } = useLocalSearchParams<{ uuid?: string }>();
   const query = useIncome(uuid);
+  const title = uuid ? t('Edit income') : t('Add income');
 
-  return (
-    <FormScreen title={uuid ? t('Edit income') : t('Add income')} loading={!!uuid && query.isPending} error={uuid ? query.error : null} onRetry={() => void query.refetch()}>
-      <IncomeForm key={uuid || 'new'} income={query.data ?? null} onDone={leave} />
-    </FormScreen>
-  );
+  // The form reads the row once, when it mounts, so it waits here for the row.
+  if (uuid && query.isPending) return <FormScreen title={title} loading />;
+  if (uuid && query.error) return <FormScreen title={title} error={query.error} onRetry={() => void query.refetch()} />;
+
+  return <IncomeForm key={uuid || 'new'} title={title} income={query.data ?? null} onDone={leave} />;
 }

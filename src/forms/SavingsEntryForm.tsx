@@ -3,9 +3,10 @@ import { StyleSheet, View } from 'react-native';
 import { apiErrorMessage } from '@/api/client';
 import { Chips } from '@/components/Chips';
 import { DateField } from '@/components/DateField';
+import { FormActions } from '@/components/FormActions';
+import { FormScreen } from '@/components/FormScreen';
 import { Input } from '@/components/Input';
 import { MoneyInput } from '@/components/MoneyInput';
-import { PillButton } from '@/components/PillButton';
 import { Segmented } from '@/components/Segmented';
 import { Txt } from '@/components/Txt';
 import { useIncomeSources } from '@/hooks/incomes';
@@ -20,6 +21,7 @@ import { isFutureYmd, todayYmd } from '@/utils/dates';
 import { amountNumber, formatMoney } from '@/utils/money';
 
 interface SavingsEntryFormProps {
+  title: string;
   entry: SavingsEntry | null;
   /** The all-time balance, so a withdrawal can be checked before the server does. */
   totalSaved: string;
@@ -36,7 +38,7 @@ interface SavingsEntryFormProps {
 }
 
 /** A deposit into savings, or a withdrawal out of it. */
-export function SavingsEntryForm({ entry, totalSaved, onDone, onAddInstead, initialType, initialAmount }: SavingsEntryFormProps) {
+export function SavingsEntryForm({ title, entry, totalSaved, onDone, onAddInstead, initialType, initialAmount }: SavingsEntryFormProps) {
   const t = useT();
   const money = useMoneySettings();
   const { data: sources = [] } = useIncomeSources();
@@ -107,41 +109,41 @@ export function SavingsEntryForm({ entry, totalSaved, onDone, onAddInstead, init
   };
 
   return (
-    <View style={styles.form}>
-      <Segmented
-        options={[
-          { value: 'deposit', label: t('Deposit') },
-          { value: 'withdraw', label: t('Withdraw') },
-        ]}
-        value={form.values.type}
-        onChange={(type) => form.set('type', type)}
-      />
-      <MoneyInput
-        label={t('Amount')}
-        value={form.values.amount}
-        onChangeText={(text) => form.set('amount', text)}
-        currency={form.values.currency}
-        onCurrencyChange={(currency) => form.set('currency', currency)}
-        error={form.errors.amount}
-        hint={withdrawing ? t('Saved so far: :amount', { amount: formatMoney(totalSaved) }) : undefined}
-        autoFocus={!entry}
-      />
-      {withdrawing ? null : (
-        <>
-          <Input label={t('From')} value={form.values.source} onChangeText={(text) => form.set('source', text)} placeholder={t('Where this came from (optional)')} maxLength={255} />
-          <Chips options={sources.slice(0, 8)} selected={form.values.source} onSelect={(value) => form.set('source', value)} />
-        </>
-      )}
-      <DateField label={t('Date')} value={form.values.saved_on} onChange={(value) => form.set('saved_on', value ?? '')} maximumDate={new Date()} error={form.errors.saved_on} />
-      <Input label={t('Note')} value={form.values.note} onChangeText={(text) => form.set('note', text)} multiline maxLength={500} />
-      <PillButton label={t('Save')} onPress={submit} loading={form.submitting} block />
-      {entry ? <PillButton label={t('Delete')} onPress={destroy} loading={remove.isPending} variant="danger" block /> : null}
-      {withdrawing ? (
-        <Txt variant="label" faint={0.5}>
-          {t('Money saved in one month can come out in another; the ceiling is everything saved so far.')}
-        </Txt>
-      ) : null}
-    </View>
+    <FormScreen title={title} footer={<FormActions saveLabel={t('Save')} onSave={submit} saving={form.submitting} deleteLabel={entry ? t('Delete') : undefined} onDelete={entry ? destroy : undefined} deleting={remove.isPending} />}>
+      <View style={styles.form}>
+        <Segmented
+          options={[
+            { value: 'deposit', label: t('Deposit') },
+            { value: 'withdraw', label: t('Withdraw') },
+          ]}
+          value={form.values.type}
+          onChange={(type) => form.set('type', type)}
+        />
+        <MoneyInput
+          label={t('Amount')}
+          value={form.values.amount}
+          onChangeText={(text) => form.set('amount', text)}
+          currency={form.values.currency}
+          onCurrencyChange={(currency) => form.set('currency', currency)}
+          error={form.errors.amount}
+          hint={withdrawing ? t('Saved so far: :amount', { amount: formatMoney(totalSaved) }) : undefined}
+          autoFocus={!entry}
+        />
+        {withdrawing ? null : (
+          <>
+            <Input label={t('From')} value={form.values.source} onChangeText={(text) => form.set('source', text)} placeholder={t('Where this came from (optional)')} maxLength={255} />
+            <Chips options={sources.slice(0, 8)} selected={form.values.source} onSelect={(value) => form.set('source', value)} />
+          </>
+        )}
+        <DateField label={t('Date')} value={form.values.saved_on} onChange={(value) => form.set('saved_on', value ?? '')} maximumDate={new Date()} error={form.errors.saved_on} />
+        <Input label={t('Note')} value={form.values.note} onChangeText={(text) => form.set('note', text)} multiline maxLength={500} />
+        {withdrawing ? (
+          <Txt variant="label" faint={0.5}>
+            {t('Money saved in one month can come out in another; the ceiling is everything saved so far.')}
+          </Txt>
+        ) : null}
+      </View>
+    </FormScreen>
   );
 }
 

@@ -1,8 +1,10 @@
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { apiErrorMessage } from '@/api/client';
+import { FormActions } from '@/components/FormActions';
+import { FormScreen } from '@/components/FormScreen';
 import { MoneyInput } from '@/components/MoneyInput';
-import { PillButton } from '@/components/PillButton';
 import { Txt } from '@/components/Txt';
 import { useDeleteSavingsPlan, useSetSavingsPlan } from '@/hooks/savings';
 import { useForm } from '@/hooks/useForm';
@@ -16,7 +18,7 @@ import { monthLabel } from '@/utils/dates';
 import { amountNumber } from '@/utils/money';
 
 /** How much to put aside this month. Upserts the slot, so saving twice just changes it. */
-export function SavingsPlanForm({ month, plan, onDone }: { month: Ym; plan: SavingsPlan | null; onDone: () => void }) {
+export function SavingsPlanForm({ title, header, month, plan, onDone }: { title: string; header?: ReactNode; month: Ym; plan: SavingsPlan | null; onDone: () => void }) {
   const t = useT();
   const locale = useLocaleStore((state) => state.locale);
   const money = useMoneySettings();
@@ -48,20 +50,21 @@ export function SavingsPlanForm({ month, plan, onDone }: { month: Ym; plan: Savi
   };
 
   return (
-    <View style={styles.form}>
-      <Txt faint={0.6}>{t('How much to put aside in :month.', { month: monthLabel(month, locale) })}</Txt>
-      <MoneyInput
-        label={t('Amount')}
-        value={form.values.amount}
-        onChangeText={(text) => form.set('amount', text)}
-        currency={form.values.currency}
-        onCurrencyChange={(currency) => form.set('currency', currency)}
-        error={form.errors.amount}
-        autoFocus
-      />
-      <PillButton label={t('Save')} onPress={submit} loading={form.submitting} block />
-      {plan ? <PillButton label={t('Remove plan')} onPress={destroy} loading={remove.isPending} variant="danger" block /> : null}
-    </View>
+    <FormScreen title={title} footer={<FormActions saveLabel={t('Save')} onSave={submit} saving={form.submitting} deleteLabel={plan ? t('Remove plan') : undefined} onDelete={plan ? destroy : undefined} deleting={remove.isPending} />}>
+      <View style={styles.form}>
+        {header}
+        <Txt faint={0.6}>{t('How much to put aside in :month.', { month: monthLabel(month, locale) })}</Txt>
+        <MoneyInput
+          label={t('Amount')}
+          value={form.values.amount}
+          onChangeText={(text) => form.set('amount', text)}
+          currency={form.values.currency}
+          onCurrencyChange={(currency) => form.set('currency', currency)}
+          error={form.errors.amount}
+          autoFocus
+        />
+      </View>
+    </FormScreen>
   );
 }
 

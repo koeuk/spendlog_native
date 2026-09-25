@@ -37,25 +37,31 @@ export default function SavingsEntryFormScreen() {
   // edited is staying as it is, so there is nothing to come back to.
   const addInstead = (type: SavingsEntryType, amount: string) => router.replace({ pathname: '/savings-entry-form', params: { month, type, amount } });
 
-  return (
-    <FormScreen
-      title={title}
-      loading={loading}
-      error={(uuid ? entries.error : null) ?? summary.error}
-      onRetry={() => {
-        void entries.refetch();
-        void summary.refetch();
-      }}
-      missing={!!uuid && !!entries.data && !entry}>
-      <SavingsEntryForm
-        key={uuid || `new-${params.type ?? 'deposit'}-${params.amount ?? ''}`}
-        entry={entry}
-        totalSaved={summary.data?.total_saved ?? '0.00'}
-        onDone={leave}
-        onAddInstead={addInstead}
-        initialType={params.type === 'withdraw' ? 'withdraw' : 'deposit'}
-        initialAmount={params.amount}
+  const error = (uuid ? entries.error : null) ?? summary.error;
+  if (loading) return <FormScreen title={title} loading />;
+  if (error)
+    return (
+      <FormScreen
+        title={title}
+        error={error}
+        onRetry={() => {
+          void entries.refetch();
+          void summary.refetch();
+        }}
       />
-    </FormScreen>
+    );
+  if (uuid && !entry) return <FormScreen title={title} missing />;
+
+  return (
+    <SavingsEntryForm
+      key={uuid || `new-${params.type ?? 'deposit'}-${params.amount ?? ''}`}
+      title={title}
+      entry={entry}
+      totalSaved={summary.data?.total_saved ?? '0.00'}
+      onDone={leave}
+      onAddInstead={addInstead}
+      initialType={params.type === 'withdraw' ? 'withdraw' : 'deposit'}
+      initialAmount={params.amount}
+    />
   );
 }

@@ -35,28 +35,34 @@ export default function SavingsPlanFormScreen() {
   const [tab, setTab] = useState<'plan' | 'history'>('plan');
   const planning = tab === 'plan';
 
-  return (
-    <FormScreen
-      title={planning ? (plan.data ? t('Change plan') : t('Set a plan')) : t('Savings history')}
-      // Only the plan tab waits on the row; the history stands on its own and
-      // must not be held behind a plan that is still loading or has failed.
-      loading={planning && plan.isPending}
-      error={planning ? plan.error : undefined}
-      onRetry={() => void plan.refetch()}
-    >
-      <View style={styles.stack}>
-        <Segmented
-          options={[
-            { value: 'plan', label: t('Plan') },
-            { value: 'history', label: t('History') },
-          ]}
-          value={tab}
-          onChange={setTab}
-        />
-        {planning ? <SavingsPlanForm key={`${month}-${plan.data?.uuid ?? 'none'}`} month={month} plan={plan.data ?? null} onDone={leave} /> : <SavingsHistory />}
-      </View>
-    </FormScreen>
+  const tabs = (
+    <Segmented
+      options={[
+        { value: 'plan', label: t('Plan') },
+        { value: 'history', label: t('History') },
+      ]}
+      value={tab}
+      onChange={setTab}
+    />
   );
+
+  // The history stands on its own and must not be held behind a plan that is
+  // still loading or has failed; it has nothing to save, so no footer.
+  if (!planning)
+    return (
+      <FormScreen title={t('Savings history')}>
+        <View style={styles.stack}>
+          {tabs}
+          <SavingsHistory />
+        </View>
+      </FormScreen>
+    );
+
+  const title = plan.data ? t('Change plan') : t('Set a plan');
+  if (plan.isPending) return <FormScreen title={title} loading />;
+  if (plan.error) return <FormScreen title={title} error={plan.error} onRetry={() => void plan.refetch()} />;
+
+  return <SavingsPlanForm key={`${month}-${plan.data?.uuid ?? 'none'}`} title={title} header={tabs} month={month} plan={plan.data ?? null} onDone={leave} />;
 }
 
 /** The savings lines of the activity log, newest first. */

@@ -1,6 +1,8 @@
 import { StyleSheet, View } from 'react-native';
 
 import { DateField } from '@/components/DateField';
+import { FormActions } from '@/components/FormActions';
+import { FormScreen } from '@/components/FormScreen';
 import { Input } from '@/components/Input';
 import { MoneyInput } from '@/components/MoneyInput';
 import { PillButton } from '@/components/PillButton';
@@ -14,7 +16,7 @@ import { isFutureYmd, parseYmd, todayYmd } from '@/utils/dates';
 import { amountNumber, formatMoney } from '@/utils/money';
 
 /** Paying some of a borrowing back. Capped at what is still owed; the server checks under a lock. */
-export function RepaymentForm({ borrowing, onDone }: { borrowing: Borrowing; onDone: () => void }) {
+export function RepaymentForm({ title, borrowing, onDone }: { title: string; borrowing: Borrowing; onDone: () => void }) {
   const t = useT();
   const money = useMoneySettings();
   const add = useAddRepayment();
@@ -41,30 +43,31 @@ export function RepaymentForm({ borrowing, onDone }: { borrowing: Borrowing; onD
     );
 
   return (
-    <View style={styles.form}>
-      <MoneyInput
-        label={t('Amount')}
-        value={form.values.amount}
-        onChangeText={(text) => form.set('amount', text)}
-        currency={form.values.currency}
-        onCurrencyChange={(currency) => form.set('currency', currency)}
-        error={form.errors.amount}
-        hint={t('Still owed: :amount', { amount: formatMoney(borrowing.remaining) })}
-        autoFocus
-      />
-      <PillButton
-        label={t('Pay it all')}
-        variant="tonal"
-        size="sm"
-        onPress={() => {
-          form.set('currency', 'USD');
-          form.set('amount', borrowing.remaining);
-        }}
-      />
-      <DateField label={t('Paid on')} value={form.values.paid_on} onChange={(value) => form.set('paid_on', value ?? '')} maximumDate={new Date()} minimumDate={parseYmd(borrowing.borrowed_on) ?? undefined} error={form.errors.paid_on} />
-      <Input label={t('Note')} value={form.values.note} onChangeText={(text) => form.set('note', text)} multiline maxLength={500} />
-      <PillButton label={t('Save')} onPress={submit} loading={form.submitting} block />
-    </View>
+    <FormScreen title={title} footer={<FormActions saveLabel={t('Save')} onSave={submit} saving={form.submitting} />}>
+      <View style={styles.form}>
+        <MoneyInput
+          label={t('Amount')}
+          value={form.values.amount}
+          onChangeText={(text) => form.set('amount', text)}
+          currency={form.values.currency}
+          onCurrencyChange={(currency) => form.set('currency', currency)}
+          error={form.errors.amount}
+          hint={t('Still owed: :amount', { amount: formatMoney(borrowing.remaining) })}
+          autoFocus
+        />
+        <PillButton
+          label={t('Pay it all')}
+          variant="tonal"
+          size="sm"
+          onPress={() => {
+            form.set('currency', 'USD');
+            form.set('amount', borrowing.remaining);
+          }}
+        />
+        <DateField label={t('Paid on')} value={form.values.paid_on} onChange={(value) => form.set('paid_on', value ?? '')} maximumDate={new Date()} minimumDate={parseYmd(borrowing.borrowed_on) ?? undefined} error={form.errors.paid_on} />
+        <Input label={t('Note')} value={form.values.note} onChangeText={(text) => form.set('note', text)} multiline maxLength={500} />
+      </View>
+    </FormScreen>
   );
 }
 

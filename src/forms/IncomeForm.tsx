@@ -3,9 +3,10 @@ import { StyleSheet, View } from 'react-native';
 import { apiErrorMessage } from '@/api/client';
 import { Chips } from '@/components/Chips';
 import { DateField } from '@/components/DateField';
+import { FormActions } from '@/components/FormActions';
+import { FormScreen } from '@/components/FormScreen';
 import { Input } from '@/components/Input';
 import { MoneyInput } from '@/components/MoneyInput';
-import { PillButton } from '@/components/PillButton';
 import { useDeleteIncome, useIncomeSources, useSaveIncome } from '@/hooks/incomes';
 import { useForm } from '@/hooks/useForm';
 import { useMoneySettings } from '@/hooks/useMoneySettings';
@@ -17,7 +18,7 @@ import { isFutureYmd, todayYmd } from '@/utils/dates';
 import { amountNumber } from '@/utils/money';
 
 /** Add or edit money coming in. `source` is free text; the chips are what this account used before. */
-export function IncomeForm({ income, onDone }: { income: Income | null; onDone: () => void }) {
+export function IncomeForm({ title, income, onDone }: { title: string; income: Income | null; onDone: () => void }) {
   const t = useT();
   const money = useMoneySettings();
   const { data: sources = [] } = useIncomeSources();
@@ -60,22 +61,22 @@ export function IncomeForm({ income, onDone }: { income: Income | null; onDone: 
   };
 
   return (
-    <View style={styles.form}>
-      <Input label={t('Source')} value={form.values.source} onChangeText={(text) => form.set('source', text)} error={form.errors.source} placeholder={t('Salary, freelance, a gift…')} autoFocus={!income} />
-      <Chips options={sources.slice(0, 8)} selected={form.values.source} onSelect={(value) => form.set('source', value)} />
-      <MoneyInput
-        label={t('Amount')}
-        value={form.values.amount}
-        onChangeText={(text) => form.set('amount', text)}
-        currency={form.values.currency}
-        onCurrencyChange={(currency) => form.set('currency', currency)}
-        error={form.errors.amount}
-      />
-      <DateField label={t('Received on')} value={form.values.received_on} onChange={(value) => form.set('received_on', value ?? '')} maximumDate={new Date()} error={form.errors.received_on} />
-      <Input label={t('Note')} value={form.values.note} onChangeText={(text) => form.set('note', text)} error={form.errors.note} multiline maxLength={500} />
-      <PillButton label={t('Save')} onPress={submit} loading={form.submitting} block />
-      {income ? <PillButton label={t('Delete')} onPress={destroy} loading={remove.isPending} variant="danger" block /> : null}
-    </View>
+    <FormScreen title={title} footer={<FormActions saveLabel={t('Save')} onSave={submit} saving={form.submitting} deleteLabel={income ? t('Delete') : undefined} onDelete={income ? destroy : undefined} deleting={remove.isPending} />}>
+      <View style={styles.form}>
+        <Input label={t('Source')} value={form.values.source} onChangeText={(text) => form.set('source', text)} error={form.errors.source} placeholder={t('Salary, freelance, a gift…')} autoFocus={!income} />
+        <Chips options={sources.slice(0, 8)} selected={form.values.source} onSelect={(value) => form.set('source', value)} />
+        <MoneyInput
+          label={t('Amount')}
+          value={form.values.amount}
+          onChangeText={(text) => form.set('amount', text)}
+          currency={form.values.currency}
+          onCurrencyChange={(currency) => form.set('currency', currency)}
+          error={form.errors.amount}
+        />
+        <DateField label={t('Received on')} value={form.values.received_on} onChange={(value) => form.set('received_on', value ?? '')} maximumDate={new Date()} error={form.errors.received_on} />
+        <Input label={t('Note')} value={form.values.note} onChangeText={(text) => form.set('note', text)} error={form.errors.note} multiline maxLength={500} />
+      </View>
+    </FormScreen>
   );
 }
 
