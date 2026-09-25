@@ -19,7 +19,7 @@ export function Card({ children, style, row = false, padded = true }: CardProps)
       style={[
         styles.card,
         { backgroundColor: theme.surface, borderRadius: row ? radius.row : radius.card },
-        padded && { padding: row ? space.md : space.lg },
+        padded && { padding: row ? space.lg : space.lg },
         style,
       ]}>
       {children}
