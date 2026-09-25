@@ -1,4 +1,3 @@
-import { useRouter } from 'expo-router';
 import { Banknote, Handshake, History, Languages, Moon, PiggyBank, Repeat, Settings, Sun, Tag, Tags, Users, type LucideIcon } from 'lucide-react-native';
 import { StyleSheet, Switch, View } from 'react-native';
 
@@ -6,6 +5,7 @@ import { ListRow } from '@/components/ListRow';
 import { Segmented } from '@/components/Segmented';
 import { Sheet, type SheetRef } from '@/components/Sheet';
 import { Txt } from '@/components/Txt';
+import { useOpenFromMenu, type MenuBranch } from '@/hooks/useOpenFromMenu';
 import { useT } from '@/i18n';
 import { LOCALES, useLocaleStore } from '@/store/locale';
 import { useSessionStore } from '@/store/session';
@@ -15,20 +15,21 @@ import { useTheme } from '@/theme/useTheme';
 interface Entry {
   icon: LucideIcon;
   label: string;
-  path: string;
+  branch: MenuBranch;
+  screen: string;
   admin?: boolean;
 }
 
 const ENTRIES: Entry[] = [
-  { icon: PiggyBank, label: 'Savings', path: '/savings' },
-  { icon: Banknote, label: 'Income', path: '/income' },
-  { icon: Repeat, label: 'Recurring', path: '/recurring' },
-  { icon: Handshake, label: 'Borrowing', path: '/borrowings' },
-  { icon: Tags, label: 'Categories', path: '/categories' },
-  { icon: Tag, label: 'Sources', path: '/income-sources' },
-  { icon: History, label: 'Activity log', path: '/activity' },
-  { icon: Settings, label: 'Settings', path: '/settings' },
-  { icon: Users, label: 'Users', path: '/admin-users', admin: true },
+  { icon: PiggyBank, label: 'Savings', branch: '(dashboard)', screen: 'savings' },
+  { icon: Banknote, label: 'Income', branch: '(dashboard)', screen: 'income' },
+  { icon: Repeat, label: 'Recurring', branch: '(dashboard)', screen: 'recurring' },
+  { icon: Handshake, label: 'Borrowing', branch: '(dashboard)', screen: 'borrowings/index' },
+  { icon: Tags, label: 'Categories', branch: '(profile)', screen: 'categories' },
+  { icon: Tag, label: 'Sources', branch: '(profile)', screen: 'income-sources' },
+  { icon: History, label: 'Activity log', branch: '(profile)', screen: 'activity' },
+  { icon: Settings, label: 'Settings', branch: '(profile)', screen: 'settings' },
+  { icon: Users, label: 'Users', branch: '(profile)', screen: 'admin-users', admin: true },
 ];
 
 /**
@@ -39,7 +40,7 @@ const ENTRIES: Entry[] = [
 export function MenuSheet({ sheetRef }: { sheetRef: SheetRef }) {
   const t = useT();
   const theme = useTheme();
-  const router = useRouter();
+  const open = useOpenFromMenu();
   const isAdmin = useSessionStore((state) => state.user?.is_admin ?? false);
   const setMode = useThemeStore((state) => state.setMode);
   const locale = useLocaleStore((state) => state.locale);
@@ -53,7 +54,7 @@ export function MenuSheet({ sheetRef }: { sheetRef: SheetRef }) {
           const Icon = entry.icon;
           return (
             <ListRow
-              key={entry.path}
+              key={entry.screen}
               leading={<Icon size={22} color={theme.faint(0.75)} />}
               title={t(entry.label)}
               chevron
@@ -62,7 +63,7 @@ export function MenuSheet({ sheetRef }: { sheetRef: SheetRef }) {
                 // Close first, then go: the sheet lives above the navigator,
                 // so leaving it open would strand it over the new screen.
                 sheetRef.current?.dismiss();
-                router.push(entry.path as never);
+                open(entry.branch, entry.screen);
               }}
             />
           );

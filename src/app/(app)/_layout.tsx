@@ -23,6 +23,8 @@ export default function AppLayout() {
     <TabBarInsetContext.Provider value={clearance}>
       <Tabs
         initialRouteName="(dashboard)"
+        // Back from a screen the menu opened returns to the tab it was opened from.
+        backBehavior="history"
         screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: theme.ground }, lazy: true }}
         tabBar={(props) => <TabBar {...props} onMenu={menu.present} />}>
         <Tabs.Screen name="(dashboard)" />

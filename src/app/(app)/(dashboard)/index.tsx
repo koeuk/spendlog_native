@@ -16,6 +16,7 @@ import { SpendingChart } from '@/components/SpendingChart';
 import { ErrorState, Skeleton, SkeletonCard } from '@/components/States';
 import { Txt } from '@/components/Txt';
 import { useIncomeSummary } from '@/hooks/incomes';
+import { useOpenFromMenu } from '@/hooks/useOpenFromMenu';
 import { useDashboard, useReport } from '@/hooks/overview';
 import { useT } from '@/i18n';
 import { useLocaleStore } from '@/store/locale';
@@ -45,6 +46,7 @@ function greeting(hour: number) {
 export default function DashboardScreen() {
   const t = useT();
   const router = useRouter();
+  const openFromMenu = useOpenFromMenu();
   const user = useSessionStore((state) => state.user);
   const [month, setMonth] = useState(currentYm());
   const [granularity, setGranularity] = useState<Granularity>('month');
@@ -66,7 +68,7 @@ export default function DashboardScreen() {
         contentContainerStyle={styles.content}
         header={
           <View style={styles.greeting}>
-            <Pressable accessibilityRole="button" accessibilityLabel={t('Settings')} onPress={() => router.push('/settings')}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t('Settings')} onPress={() => openFromMenu('(profile)', 'settings')}>
               <Avatar name={user?.name ?? ''} url={user?.avatar_url} size={44} />
             </Pressable>
             <View style={styles.greetingText}>
