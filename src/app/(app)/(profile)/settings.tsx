@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
-import { Camera, CircleHelp, KeyRound, LogOut, Settings2, Trash2, Users } from 'lucide-react-native';
+import { Camera, CircleHelp, Contrast, FileQuestion, KeyRound, Languages, LogOut, Lightbulb, Palette, Sparkles, Trash2, Users, Wallet } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { apiErrorMessage } from '@/api/client';
@@ -10,7 +10,7 @@ import { Header } from '@/components/Header';
 import { ListRow } from '@/components/ListRow';
 import { PillButton } from '@/components/PillButton';
 import { Screen } from '@/components/Screen';
-import { Segmented } from '@/components/Segmented';
+import { SettingsGroup } from '@/components/SettingsGroup';
 import { Sheet, useSheet } from '@/components/Sheet';
 import { Txt } from '@/components/Txt';
 import { useAvatar } from '@/hooks/profile';
@@ -19,13 +19,19 @@ import { PasswordSheet } from '@/sheets/PasswordSheet';
 import { ProfileSheet } from '@/sheets/ProfileSheet';
 import { LOCALES, useLocaleStore } from '@/store/locale';
 import { useSessionStore } from '@/store/session';
-import { useThemeStore, type ThemeMode } from '@/store/theme';
+import { useThemeStore } from '@/store/theme';
 import { toast } from '@/store/toast';
 import { useTheme } from '@/theme/useTheme';
 import { confirm } from '@/utils/confirm';
 import { pickImage } from '@/utils/pickImage';
 
-/** The account page: photo, details, appearance, password, and the admin doors. */
+import { APPEARANCE_OPTIONS } from './appearance';
+
+/**
+ * The account page, as one grouped list: what each row is set to reads at a
+ * glance, and the value itself is chosen on the row's own page rather than in
+ * a form stacked here.
+ */
 export default function SettingsScreen() {
   const t = useT();
   const theme = useTheme();
@@ -33,13 +39,15 @@ export default function SettingsScreen() {
   const user = useSessionStore((state) => state.user);
   const signOut = useSessionStore((state) => state.signOut);
   const mode = useThemeStore((state) => state.mode);
-  const setMode = useThemeStore((state) => state.setMode);
   const locale = useLocaleStore((state) => state.locale);
-  const setLocale = useLocaleStore((state) => state.setLocale);
   const avatar = useAvatar();
   const profileSheet = useSheet();
   const passwordSheet = useSheet();
   const avatarSheet = useSheet();
+
+  const icon = (Icon: typeof Wallet) => <Icon size={22} color={theme.faint(0.7)} />;
+  const appearanceLabel = APPEARANCE_OPTIONS.find((option) => option.value === mode)?.label ?? 'System';
+  const languageLabel = LOCALES.find((option) => option.code === locale)?.label ?? '';
 
   const choosePhoto = async () => {
     avatarSheet.dismiss();
@@ -96,39 +104,28 @@ export default function SettingsScreen() {
           <PillButton label={t('Edit')} variant="tonal" size="sm" onPress={profileSheet.present} />
         </Card>
 
-        <Card padded={false} style={styles.list}>
-          <ListRow leading={<KeyRound size={22} color={theme.faint(0.7)} />} title={t('Change password')} chevron divider onPress={passwordSheet.present} />
-          <ListRow leading={<CircleHelp size={22} color={theme.faint(0.7)} />} title={t('Help')} chevron onPress={() => router.push('/help')} />
-        </Card>
-
-        <Card style={styles.section}>
-          <Txt variant="heading">{t('Appearance')}</Txt>
-          <Segmented<ThemeMode>
-            options={[
-              { value: 'light', label: t('Light') },
-              { value: 'dark', label: t('Dark') },
-              { value: 'system', label: t('System') },
-            ]}
-            value={mode}
-            onChange={setMode}
-          />
-          <Txt variant="heading" style={styles.subheading}>
-            {t('Language')}
-          </Txt>
-          <Segmented options={LOCALES.map((option) => ({ value: option.code, label: option.label }))} value={locale} onChange={setLocale} />
-        </Card>
+        <SettingsGroup title={t('General')}>
+          <ListRow leading={icon(Contrast)} title={t('Appearance')} trailingText={t(appearanceLabel)} trailingColor={theme.faint(0.5)} chevron divider onPress={() => router.push('/appearance')} />
+          <ListRow leading={icon(Languages)} title={t('Language')} trailingText={languageLabel} trailingColor={theme.faint(0.5)} chevron onPress={() => router.push('/language')} />
+        </SettingsGroup>
 
         {user.is_admin ? (
-          <Card padded={false} style={styles.list}>
-            <Txt variant="heading" style={styles.listTitle}>
-              {t('Admin')}
-            </Txt>
-            <ListRow leading={<Users size={22} color={theme.faint(0.7)} />} title={t('Users')} chevron divider onPress={() => router.push('/admin-users')} />
-            <ListRow leading={<Settings2 size={22} color={theme.faint(0.7)} />} title={t('App settings')} chevron onPress={() => router.push('/admin-settings')} />
-          </Card>
+          <SettingsGroup title={t('App')}>
+            <ListRow leading={icon(Wallet)} title={t('Spending')} chevron divider onPress={() => router.push('/spending')} />
+            <ListRow leading={icon(Lightbulb)} title={t('Guidance')} chevron divider onPress={() => router.push('/guidance')} />
+            <ListRow leading={icon(FileQuestion)} title={t('FAQ')} chevron divider onPress={() => router.push('/faqs')} />
+            <ListRow leading={icon(Sparkles)} title={t('Branding')} chevron divider onPress={() => router.push('/branding')} />
+            <ListRow leading={icon(Palette)} title={t('Colours')} chevron divider onPress={() => router.push('/colours')} />
+            <ListRow leading={icon(Users)} title={t('Users')} chevron onPress={() => router.push('/admin-users')} />
+          </SettingsGroup>
         ) : null}
 
-        <PillButton label={t('Sign out')} icon={LogOut} variant="outline" onPress={leave} block />
+        <SettingsGroup title={t('Account')}>
+          <ListRow leading={icon(KeyRound)} title={t('Change password')} chevron divider onPress={passwordSheet.present} />
+          <ListRow leading={icon(CircleHelp)} title={t('Help')} chevron divider onPress={() => router.push('/help')} />
+          <ListRow leading={<LogOut size={22} color={theme.errorInk} />} title={t('Sign out')} titleColor={theme.errorInk} onPress={() => void leave()} />
+        </SettingsGroup>
+
         <Txt variant="caption" faint={0.4} align="center">
           SpendLog {Constants.expoConfig?.version ?? ''}
         </Txt>
@@ -146,13 +143,9 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { gap: 14, paddingTop: 4 },
+  content: { gap: 18, paddingTop: 4 },
   profile: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   avatarWrap: { position: 'relative' },
   camera: { position: 'absolute', right: -2, bottom: -2, width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   identity: { flex: 1, gap: 2 },
-  list: { paddingHorizontal: 16 },
-  listTitle: { paddingTop: 14 },
-  section: { gap: 10 },
-  subheading: { marginTop: 6 },
 });

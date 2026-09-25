@@ -13,6 +13,8 @@ interface ListRowProps {
   trailing?: ReactNode;
   trailingText?: string;
   trailingColor?: string;
+  /** A coloured title, for a destructive row such as Sign out. */
+  titleColor?: string;
   onPress?: () => void;
   onLongPress?: () => void;
   chevron?: boolean;
@@ -29,6 +31,7 @@ export function ListRow({
   trailing,
   trailingText,
   trailingColor,
+  titleColor,
   onPress,
   onLongPress,
   chevron = false,
@@ -46,7 +49,7 @@ export function ListRow({
       style={({ pressed }) => [styles.row, divider && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.hairline }, pressed && { opacity: 0.7 }]}>
       {leading ? <View style={styles.leading}>{leading}</View> : null}
       <View style={styles.body}>
-        <Txt weight="medium" numberOfLines={1}>
+        <Txt weight="medium" color={titleColor} numberOfLines={1}>
           {title}
         </Txt>
         {subtitle ? (
