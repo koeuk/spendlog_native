@@ -3,10 +3,11 @@ import { StyleSheet, View } from 'react-native';
 
 import { apiErrorMessage } from '@/api/client';
 import { Avatar } from '@/components/Avatar';
+import { FormActions } from '@/components/FormActions';
+import { FormScreen } from '@/components/FormScreen';
 import { Input } from '@/components/Input';
 import { OptionPicker } from '@/components/OptionPicker';
 import { PillButton } from '@/components/PillButton';
-import { Sheet, type SheetRef } from '@/components/Sheet';
 import { Txt } from '@/components/Txt';
 import { useAdminUserAvatar, useDeleteAdminUser, useSaveAdminUser } from '@/hooks/admin';
 import { useForm } from '@/hooks/useForm';
@@ -28,22 +29,20 @@ export const STATUSES: { value: UserStatus; label: string }[] = [
   { value: 'archived', label: 'Archived' },
 ];
 
-interface AdminUserSheetProps {
-  sheetRef: SheetRef;
+interface AdminUserFormProps {
+  title: string;
+  /** The account being edited, or null for a new one. */
   user: AdminUser | null;
+  /** Called once the account is saved or deleted; the page leaves. */
+  onDone: () => void;
 }
 
-/** An account, as an admin sees it: details, role, status, photo. */
-export function AdminUserSheet({ sheetRef, user }: AdminUserSheetProps) {
-  const t = useT();
-  return (
-    <Sheet sheetRef={sheetRef} title={user ? t('Edit user') : t('Add user')}>
-      <AdminUserForm key={user ? `${user.uuid}-${user.avatar_url ?? ''}` : 'new'} user={user} close={() => sheetRef.current?.dismiss()} />
-    </Sheet>
-  );
-}
-
-function AdminUserForm({ user, close }: { user: AdminUser | null; close: () => void }) {
+/**
+ * An account, as an admin sees it: details, role, status, photo. The page
+ * frame lives here so Save and Delete can sit in the pinned footer beside the
+ * state they read. The photo saves on its own, the moment one is picked.
+ */
+export function AdminUserForm({ title, user, onDone }: AdminUserFormProps) {
   const t = useT();
   const save = useSaveAdminUser();
   const remove = useDeleteAdminUser();
@@ -66,7 +65,7 @@ function AdminUserForm({ user, close }: { user: AdminUser | null; close: () => v
           payload: { name: name.trim(), email: email.trim(), role, status, ...(password ? { password, password_confirmation } : {}) },
         });
         toast(t(user ? 'User updated.' : 'User added.'), 'success');
-        close();
+        onDone();
       },
       () => ({
         name: form.values.name.trim() ? undefined : t('Enter a name.'),
@@ -83,7 +82,7 @@ function AdminUserForm({ user, close }: { user: AdminUser | null; close: () => v
     try {
       await remove.mutateAsync(user.uuid);
       toast(t('User deleted.'), 'success');
-      close();
+      onDone();
     } catch (error) {
       toast(t(apiErrorMessage(error)), 'error');
     }
@@ -112,30 +111,41 @@ function AdminUserForm({ user, close }: { user: AdminUser | null; close: () => v
   };
 
   return (
-    <View style={styles.form}>
-      {user ? (
-        <View style={styles.photoRow}>
-          <Avatar name={user.name} url={user.avatar_url} size={56} />
-          <View style={styles.photoButtons}>
-            <PillButton label={t('Choose a photo')} icon={Camera} variant="tonal" size="sm" onPress={() => void choosePhoto()} loading={avatar.upload.isPending} />
-            {user.avatar_url ? <PillButton label={t('Remove')} icon={Trash2} variant="ghost" size="sm" onPress={() => void removePhoto()} loading={avatar.remove.isPending} /> : null}
+    <FormScreen
+      title={title}
+      footer={
+        <FormActions
+          saveLabel={t('Save')}
+          onSave={submit}
+          saving={form.submitting}
+          deleteLabel={user ? t('Delete') : undefined}
+          onDelete={user ? destroy : undefined}
+          deleting={remove.isPending}
+        />
+      }>
+      <View style={styles.form}>
+        {user ? (
+          <View style={styles.photoRow}>
+            <Avatar name={user.name} url={user.avatar_url} size={56} />
+            <View style={styles.photoButtons}>
+              <PillButton label={t('Choose a photo')} icon={Camera} variant="tonal" size="sm" onPress={() => void choosePhoto()} loading={avatar.upload.isPending} />
+              {user.avatar_url ? <PillButton label={t('Remove')} icon={Trash2} variant="ghost" size="sm" onPress={() => void removePhoto()} loading={avatar.remove.isPending} /> : null}
+            </View>
           </View>
-        </View>
-      ) : null}
-      <Input sheet label={t('Name')} value={form.values.name} onChangeText={(text) => form.set('name', text)} error={form.errors.name} autoFocus={!user} />
-      <Input sheet label={t('Email')} value={form.values.email} onChangeText={(text) => form.set('email', text)} error={form.errors.email} autoCapitalize="none" keyboardType="email-address" />
-      <Input sheet label={user ? t('New password') : t('Password')} value={form.values.password} onChangeText={(text) => form.set('password', text)} error={form.errors.password} secureTextEntry autoCapitalize="none" hint={user ? t('Leave blank to keep the current one.') : undefined} />
-      <Input sheet label={t('Confirm password')} value={form.values.password_confirmation} onChangeText={(text) => form.set('password_confirmation', text)} error={form.errors.password_confirmation} secureTextEntry autoCapitalize="none" />
-      <OptionPicker label={t('Role')} value={form.values.role} onChange={(value) => form.set('role', value)} options={ROLES.map((role) => ({ value: role.value, label: t(role.label) }))} />
-      <OptionPicker label={t('Status')} value={form.values.status} onChange={(value) => form.set('status', value)} options={STATUSES.map((status) => ({ value: status.value, label: t(status.label) }))} />
-      <PillButton label={t('Save')} onPress={submit} loading={form.submitting} block />
-      {user ? <PillButton label={t('Delete')} onPress={destroy} loading={remove.isPending} variant="danger" block /> : null}
-      {user?.role === 'super_admin' ? (
-        <Txt variant="label" faint={0.5}>
-          {t('This is the owner account; its role cannot be changed here.')}
-        </Txt>
-      ) : null}
-    </View>
+        ) : null}
+        <Input label={t('Name')} value={form.values.name} onChangeText={(text) => form.set('name', text)} error={form.errors.name} autoFocus={!user} />
+        <Input label={t('Email')} value={form.values.email} onChangeText={(text) => form.set('email', text)} error={form.errors.email} autoCapitalize="none" keyboardType="email-address" />
+        <Input label={user ? t('New password') : t('Password')} value={form.values.password} onChangeText={(text) => form.set('password', text)} error={form.errors.password} secureTextEntry autoCapitalize="none" hint={user ? t('Leave blank to keep the current one.') : undefined} />
+        <Input label={t('Confirm password')} value={form.values.password_confirmation} onChangeText={(text) => form.set('password_confirmation', text)} error={form.errors.password_confirmation} secureTextEntry autoCapitalize="none" />
+        <OptionPicker label={t('Role')} value={form.values.role} onChange={(value) => form.set('role', value)} options={ROLES.map((role) => ({ value: role.value, label: t(role.label) }))} />
+        <OptionPicker label={t('Status')} value={form.values.status} onChange={(value) => form.set('status', value)} options={STATUSES.map((status) => ({ value: status.value, label: t(status.label) }))} />
+        {user?.role === 'super_admin' ? (
+          <Txt variant="label" faint={0.5}>
+            {t('This is the owner account; its role cannot be changed here.')}
+          </Txt>
+        ) : null}
+      </View>
+    </FormScreen>
   );
 }
 

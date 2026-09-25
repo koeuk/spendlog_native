@@ -1,5 +1,5 @@
+import { useRouter } from 'expo-router';
 import { Users } from 'lucide-react-native';
-import { useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 
 import { Avatar } from '@/components/Avatar';
@@ -8,13 +8,12 @@ import { Fab } from '@/components/Fab';
 import { Header } from '@/components/Header';
 import { ListRow } from '@/components/ListRow';
 import { Screen } from '@/components/Screen';
-import { useSheet } from '@/components/Sheet';
 import { EmptyState, ErrorState, SkeletonCard } from '@/components/States';
 import { Txt } from '@/components/Txt';
 import { useTabBarInset } from '@/components/TabBar';
+import { STATUSES } from '@/forms/AdminUserForm';
 import { useAdminUsers } from '@/hooks/admin';
 import { useT } from '@/i18n';
-import { AdminUserSheet, STATUSES } from '@/sheets/AdminUserSheet';
 import { layout, radius } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import type { AdminUser } from '@/types/api';
@@ -25,13 +24,8 @@ export default function AdminUsersScreen() {
   const theme = useTheme();
   const tabBarInset = useTabBarInset();
   const list = useAdminUsers();
-  const sheet = useSheet();
-  const [editing, setEditing] = useState<AdminUser | null>(null);
-
-  const open = (user: AdminUser | null) => {
-    setEditing(user);
-    sheet.present();
-  };
+  const router = useRouter();
+  const open = (user: AdminUser | null) => router.push(user ? { pathname: '/admin-user-form', params: { uuid: user.uuid } } : '/admin-user-form');
 
   const statusLabel = (user: AdminUser) => t(STATUSES.find((status) => status.value === user.status)?.label ?? user.status);
   const roleLabel = (user: AdminUser) => t(user.role === 'super_admin' ? 'Owner' : user.role === 'admin' ? 'Admin' : 'User');
@@ -73,7 +67,6 @@ export default function AdminUsersScreen() {
         />
       </Screen>
       <Fab onPress={() => open(null)} accessibilityLabel={t('Add user')} />
-      <AdminUserSheet sheetRef={sheet.ref} user={editing} />
     </>
   );
 }

@@ -28,6 +28,17 @@ export function useAdminUsers() {
   return useInfiniteList(keys.adminUsers, (page) => listAdminUsers(page));
 }
 
+/**
+ * One account for its edit page. The API has no single-user route, so it is
+ * read from the users list: already cached when the page is opened from there,
+ * and its first page is fetched when the page is opened cold.
+ */
+export function useAdminUser(uuid: string) {
+  const list = useAdminUsers();
+  const user = list.items.find((candidate) => candidate.uuid === uuid) ?? null;
+  return { user, isPending: list.isPending, error: list.error, refetch: list.refetch };
+}
+
 export function useSaveAdminUser() {
   return useMutation({
     mutationFn: ({ uuid, payload }: { uuid?: string; payload: AdminUserPayload }) => (uuid ? updateAdminUser(uuid, payload) : createAdminUser(payload)),
