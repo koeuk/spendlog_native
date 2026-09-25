@@ -3,8 +3,9 @@ import { useColorScheme } from 'react-native';
 
 import { useBranding } from '@/hooks/useBranding';
 import { useLocaleStore, type Locale } from '@/store/locale';
+import { useSessionStore } from '@/store/session';
 import { useThemeStore } from '@/store/theme';
-import type { Branding } from '@/types/api';
+import type { Branding, UserPreferences } from '@/types/api';
 import { luminance, mix, parseHex, rgba } from '@/utils/color';
 
 import { palette } from './tokens';
@@ -59,8 +60,13 @@ const KHMER: Record<FontWeight, string> = {
   bold: 'NotoSansKhmer_700Bold',
 };
 
-export function buildTheme(isDark: boolean, locale: Locale, branding: Branding | undefined): Theme {
-  const chosen = branding?.branded && parseHex(branding.button_color) ? branding.button_color : null;
+/** The white background means "the ambient look", not a flat colour to paint. */
+const WHITE = '#ffffff';
+
+export function buildTheme(isDark: boolean, locale: Locale, branding: Branding | undefined, own?: UserPreferences | null): Theme {
+  // The account's own colours win over the admin's, one field at a time.
+  const ownButton = own?.button_color && parseHex(own.button_color) ? own.button_color : null;
+  const chosen = ownButton ?? (branding?.branded && parseHex(branding.button_color) ? branding.button_color : null);
   // A chosen colour is lifted for dark mode the way the house green is: the
   // deep one reads on cream, the bright one on near-black.
   const accent = isDark ? (chosen ? mix(chosen, palette.white, 0.22) : palette.greenBright) : (chosen ?? palette.green);
@@ -69,7 +75,9 @@ export function buildTheme(isDark: boolean, locale: Locale, branding: Branding |
   const text = isDark ? palette.paper : palette.ink;
   // A chosen background paints flat, light mode only: an admin picking Cream
   // should not switch dark mode off for everyone.
-  const chosenGround = !isDark && branding?.plain_background && parseHex(branding.body_color) ? branding.body_color : null;
+  const ownBody = own?.body_color && parseHex(own.body_color) ? own.body_color : null;
+  const body = ownBody ? (ownBody.toLowerCase() === WHITE ? null : ownBody) : branding?.plain_background && parseHex(branding.body_color) ? branding.body_color : null;
+  const chosenGround = !isDark && body ? body : null;
   const fonts = locale === 'km' ? KHMER : INTER;
 
   return {
@@ -101,6 +109,7 @@ export function useTheme(): Theme {
   const mode = useThemeStore((state) => state.mode);
   const locale = useLocaleStore((state) => state.locale);
   const { data: branding } = useBranding();
+  const own = useSessionStore((state) => state.user?.preferences);
   const isDark = mode === 'system' ? system === 'dark' : mode === 'dark';
-  return useMemo(() => buildTheme(isDark, locale, branding), [isDark, locale, branding]);
+  return useMemo(() => buildTheme(isDark, locale, branding, own), [isDark, locale, branding, own]);
 }

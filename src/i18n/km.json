@@ -701,5 +701,12 @@
   "user": "អ្នកប្រើ",
   "vs :period": "ធៀបនឹង :period",
   "vs :period so far": "ធៀបនឹង :period រហូតមកដល់ពេលនេះ",
-  "© :year :name. All rights reserved.": "© :year :name. រក្សាសិទ្ធិគ្រប់យ៉ាង។"
+  "© :year :name. All rights reserved.": "© :year :name. រក្សាសិទ្ធិគ្រប់យ៉ាង។",
+  "Currency": "រូបិយប័ណ្ណ",
+  "App colours": "ពណ៌កម្មវិធី",
+  "App default": "លំនាំដើមកម្មវិធី",
+  "Your own": "ផ្ទាល់ខ្លួន",
+  "Amount fields start on this currency. Riel still converts at :rate per dollar.": "ប្រអប់ចំនួនទឹកប្រាក់ចាប់ផ្តើមដោយរូបិយប័ណ្ណនេះ។ ប្រាក់រៀលនៅតែប្តូរតាមអត្រា :rate ក្នុងមួយដុល្លារ។",
+  "Your own colours, for you only. Everyone else keeps the app’s.": "ពណ៌ផ្ទាល់ខ្លួនរបស់អ្នក សម្រាប់តែអ្នកប៉ុណ្ណោះ។ អ្នកផ្សេងទៀតនៅតែប្រើពណ៌របស់កម្មវិធី។",
+  "Use the app’s colours": "ប្រើពណ៌របស់កម្មវិធី"
 }

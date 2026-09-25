@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
-import { Camera, CircleHelp, Contrast, FileQuestion, KeyRound, Languages, LogOut, Lightbulb, Palette, Sparkles, Trash2, Users, Wallet } from 'lucide-react-native';
+import { Camera, CircleHelp, Coins, Contrast, FileQuestion, KeyRound, Languages, LogOut, Lightbulb, Palette, Sparkles, Trash2, Users, Wallet } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { apiErrorMessage } from '@/api/client';
@@ -106,7 +106,9 @@ export default function SettingsScreen() {
 
         <SettingsGroup title={t('General')}>
           <ListRow leading={icon(Contrast)} title={t('Appearance')} trailingText={t(appearanceLabel)} trailingColor={theme.faint(0.5)} chevron divider onPress={() => router.push('/appearance')} />
-          <ListRow leading={icon(Languages)} title={t('Language')} trailingText={languageLabel} trailingColor={theme.faint(0.5)} chevron onPress={() => router.push('/language')} />
+          <ListRow leading={icon(Languages)} title={t('Language')} trailingText={languageLabel} trailingColor={theme.faint(0.5)} chevron divider onPress={() => router.push('/language')} />
+          <ListRow leading={icon(Coins)} title={t('Currency')} trailingText={user.preferences?.currency ?? t('App default')} trailingColor={theme.faint(0.5)} chevron divider onPress={() => router.push('/currency')} />
+          <ListRow leading={icon(Palette)} title={t('Colours')} trailingText={user.preferences?.button_color || user.preferences?.body_color ? t('Your own') : t('App default')} trailingColor={theme.faint(0.5)} chevron onPress={() => router.push('/my-colours')} />
         </SettingsGroup>
 
         {user.is_admin ? (
@@ -115,7 +117,7 @@ export default function SettingsScreen() {
             <ListRow leading={icon(Lightbulb)} title={t('Guidance')} chevron divider onPress={() => router.push('/guidance')} />
             <ListRow leading={icon(FileQuestion)} title={t('FAQ')} chevron divider onPress={() => router.push('/faqs')} />
             <ListRow leading={icon(Sparkles)} title={t('Branding')} chevron divider onPress={() => router.push('/branding')} />
-            <ListRow leading={icon(Palette)} title={t('Colours')} chevron divider onPress={() => router.push('/colours')} />
+            <ListRow leading={icon(Palette)} title={t('App colours')} chevron divider onPress={() => router.push('/colours')} />
             <ListRow leading={icon(Users)} title={t('Users')} chevron onPress={() => router.push('/admin-users')} />
           </SettingsGroup>
         ) : null}

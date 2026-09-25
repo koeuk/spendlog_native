@@ -42,8 +42,24 @@ export interface User {
   phone: string | null;
   avatar_url: string | null;
   is_admin: boolean;
+  /** Absent on a user cached before preferences existed; treat as all-null. */
+  preferences?: UserPreferences;
   email_verified_at: string | null;
   created_at: string;
+}
+
+/** One account's own choices, each null where it follows the app-wide value. */
+export interface UserPreferences {
+  currency: Currency | null;
+  button_color: string | null;
+  body_color: string | null;
+}
+
+export interface Preferences extends UserPreferences {
+  /** Where this account's amount fields actually start: its own choice, or the app's. */
+  default_currency: Currency;
+  button_presets: { value: string; label: string; is_default?: boolean }[];
+  body_presets: { value: string; label: string }[];
 }
 
 export interface AuthResponse {
