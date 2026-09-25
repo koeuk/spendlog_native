@@ -1,8 +1,9 @@
 import type { PropsWithChildren } from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
 import { radius, space } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
+
+import { Glass } from './Glass';
 
 interface CardProps extends PropsWithChildren {
   style?: StyleProp<ViewStyle>;
@@ -11,19 +12,12 @@ interface CardProps extends PropsWithChildren {
   padded?: boolean;
 }
 
-/** A solid pane over the ground: white by day, the dark surface at night. */
+/** A pane of liquid glass over the ground. */
 export function Card({ children, style, row = false, padded = true }: CardProps) {
-  const theme = useTheme();
   return (
-    <View
-      style={[
-        styles.card,
-        { backgroundColor: theme.surface, borderRadius: row ? radius.row : radius.card },
-        padded && { padding: row ? space.lg : space.lg },
-        style,
-      ]}>
+    <Glass style={[styles.card, { borderRadius: row ? radius.row : radius.card }, padded && { padding: space.lg }, style]}>
       {children}
-    </View>
+    </Glass>
   );
 }
 

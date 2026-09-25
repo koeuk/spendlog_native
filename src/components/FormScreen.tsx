@@ -15,6 +15,7 @@ import { layout } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 
 import { Card } from "./Card";
+import { Backdrop, Glass } from "./Glass";
 import { Header } from "./Header";
 import { EmptyState, ErrorState, SkeletonCard } from "./States";
 
@@ -58,9 +59,10 @@ export function FormScreen({
     <View
       style={[
         styles.root,
-        { backgroundColor: theme.ground, paddingTop: insets.top },
+        { paddingTop: insets.top },
       ]}
     >
+      <Backdrop />
       <Header title={title} back />
       <KeyboardAvoidingView
         style={styles.root}
@@ -94,18 +96,17 @@ export function FormScreen({
           )}
         </ScrollView>
         {bar && (
-          <View
+          <Glass
             style={[
               styles.footer,
               {
-                backgroundColor: theme.surface,
                 borderTopColor: theme.hairline,
                 paddingBottom: (raised ? 0 : insets.bottom) + 12,
               },
             ]}
           >
             {bar}
-          </View>
+          </Glass>
         )}
       </KeyboardAvoidingView>
     </View>

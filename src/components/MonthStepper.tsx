@@ -7,6 +7,7 @@ import { useTheme } from '@/theme/useTheme';
 import type { Ym } from '@/types/api';
 import { currentYm, monthLabel, shiftMonth } from '@/utils/dates';
 
+import { Glass } from './Glass';
 import { Txt } from './Txt';
 
 interface MonthStepperProps {
@@ -25,7 +26,8 @@ export function MonthStepper({ month, onChange, clampToNow = false }: MonthStepp
 
   return (
     <View style={styles.row}>
-      <Pressable accessibilityRole="button" accessibilityLabel={t('Previous month')} hitSlop={8} onPress={() => onChange(shiftMonth(month, -1))} style={[styles.arrow, { backgroundColor: theme.surface }]}>
+      <Pressable accessibilityRole="button" accessibilityLabel={t('Previous month')} hitSlop={8} onPress={() => onChange(shiftMonth(month, -1))} style={styles.arrow}>
+        <Glass interactive fill style={styles.round} />
         <ChevronLeft size={20} color={theme.text} />
       </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel={t('This month')} onPress={() => onChange(currentYm())} style={styles.label}>
@@ -45,7 +47,8 @@ export function MonthStepper({ month, onChange, clampToNow = false }: MonthStepp
         disabled={atNow}
         hitSlop={8}
         onPress={() => onChange(shiftMonth(month, 1))}
-        style={[styles.arrow, { backgroundColor: theme.surface, opacity: atNow ? 0.35 : 1 }]}>
+        style={[styles.arrow, { opacity: atNow ? 0.35 : 1 }]}>
+        <Glass interactive fill style={styles.round} />
         <ChevronRight size={20} color={theme.text} />
       </Pressable>
     </View>
@@ -55,5 +58,6 @@ export function MonthStepper({ month, onChange, clampToNow = false }: MonthStepp
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   arrow: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  round: { borderRadius: 20 },
   label: { flex: 1, alignItems: 'center' },
 });

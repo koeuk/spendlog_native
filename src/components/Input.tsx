@@ -38,7 +38,7 @@ export function Input({ label, error, hint, left, right, sheet = false, containe
       <View
         style={[
           styles.field,
-          { backgroundColor: theme.surface, borderColor, borderWidth: focused || error ? 1.6 : 1 },
+          { backgroundColor: theme.fieldFill, borderColor, borderWidth: focused || error ? 1.6 : 1 },
           multiline ? styles.multiline : styles.single,
         ]}>
         {left ? <View style={styles.adornment}>{left}</View> : null}

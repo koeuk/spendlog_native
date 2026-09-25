@@ -3,6 +3,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useTheme } from '@/theme/useTheme';
 
+import { Glass } from './Glass';
+
 interface IconButtonProps {
   icon: LucideIcon;
   onPress: () => void;
@@ -22,7 +24,8 @@ export function IconButton({ icon: Icon, onPress, accessibilityLabel, active = f
       accessibilityState={{ selected: active }}
       hitSlop={6}
       onPress={onPress}
-      style={({ pressed }) => [styles.button, { width: size, height: size, borderRadius: size / 2, backgroundColor: active ? theme.accentSoft : theme.surface, opacity: pressed ? 0.7 : 1 }]}>
+      style={({ pressed }) => [styles.button, { width: size, height: size, borderRadius: size / 2, opacity: pressed ? 0.7 : 1 }]}>
+      <Glass interactive fill tint={active ? theme.accentSoft : undefined} style={{ borderRadius: size / 2 }} />
       <View>
         <Icon size={Math.round(size * 0.5)} color={active ? theme.accent : theme.text} strokeWidth={2} />
       </View>

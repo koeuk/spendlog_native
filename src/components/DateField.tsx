@@ -81,7 +81,7 @@ export function DateField({ label, value, onChange, placeholder, maximumDate, mi
         accessibilityLabel={label}
         accessibilityValue={{ text: value ?? undefined }}
         onPress={open}
-        style={({ pressed }) => [styles.field, { backgroundColor: theme.surface, borderColor: error ? theme.errorInk : theme.inputBorder, opacity: pressed ? 0.8 : 1 }]}>
+        style={({ pressed }) => [styles.field, { backgroundColor: theme.fieldFill, borderColor: error ? theme.errorInk : theme.inputBorder, opacity: pressed ? 0.8 : 1 }]}>
         <CalendarDays size={18} color={theme.faint(0.5)} />
         <Txt style={styles.value} color={value ? theme.text : theme.placeholder}>
           {value ? longDate(value, locale) : (placeholder ?? '')}

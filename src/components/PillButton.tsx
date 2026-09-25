@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View, type StyleProp, type Vi
 import { radius } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
+import { Glass } from './Glass';
 import { Txt } from './Txt';
 
 export type ButtonVariant = 'filled' | 'tonal' | 'outline' | 'ghost' | 'danger';
@@ -45,6 +46,8 @@ export function PillButton({
     ghost: { background: 'transparent', text: theme.accent, border: 'transparent' },
     danger: { background: theme.errorFill, text: theme.errorInk, border: 'transparent' },
   }[variant];
+  // The prominent button is glass tinted with the accent; the outline one is clear glass.
+  const glass = variant === 'filled' || variant === 'outline';
 
   return (
     <Pressable
@@ -57,9 +60,10 @@ export function PillButton({
         styles.base,
         size === 'sm' ? styles.small : styles.medium,
         block && styles.block,
-        { backgroundColor: colors.background, borderColor: colors.border, opacity: inactive ? 0.55 : pressed ? 0.85 : 1 },
+        { backgroundColor: glass ? 'transparent' : colors.background, borderColor: variant === 'outline' ? colors.border : 'transparent', opacity: inactive ? 0.55 : pressed ? 0.85 : 1 },
         style,
       ]}>
+      {glass ? <Glass interactive fill tint={variant === 'filled' ? theme.accent : undefined} style={styles.glass} /> : null}
       {loading ? (
         <ActivityIndicator color={colors.text} />
       ) : (
@@ -85,5 +89,6 @@ const styles = StyleSheet.create({
   medium: { minHeight: 52, paddingHorizontal: 22 },
   small: { minHeight: 38, paddingHorizontal: 16 },
   block: { alignSelf: 'stretch' },
+  glass: { borderRadius: radius.pill },
   content: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 });

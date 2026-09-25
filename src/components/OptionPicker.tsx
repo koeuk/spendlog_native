@@ -48,7 +48,7 @@ export function OptionPicker<T extends string>({ label, title, placeholder, valu
         onPress={sheet.present}
         style={({ pressed }) => [
           styles.field,
-          { backgroundColor: theme.surface, borderColor: error ? theme.errorInk : theme.inputBorder, opacity: pressed ? 0.8 : 1 },
+          { backgroundColor: theme.fieldFill, borderColor: error ? theme.errorInk : theme.inputBorder, opacity: pressed ? 0.8 : 1 },
         ]}>
         {selected?.leading ? <View style={styles.leading}>{selected.leading}</View> : null}
         <Txt style={styles.value} color={selected ? theme.text : theme.placeholder} numberOfLines={1}>

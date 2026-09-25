@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { layout } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
+import { Glass } from './Glass';
 import { Txt } from './Txt';
 
 interface HeaderProps {
@@ -42,7 +43,8 @@ export function Header({ title, back = false, right, large = false }: HeaderProp
             hitSlop={12}
             onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
             style={({ pressed }) => [styles.backButton, pressed && { opacity: 0.6 }]}>
-            <ChevronLeft size={26} color={theme.text} />
+            <Glass interactive fill style={styles.round} />
+            <ChevronLeft size={24} color={theme.text} />
           </Pressable>
         )}
       </View>
@@ -72,6 +74,7 @@ const styles = StyleSheet.create({
   grow: { flex: 1 },
   side: { width: 64, flexDirection: 'row', alignItems: 'center' },
   right: { justifyContent: 'flex-end' },
-  backButton: { padding: 6 },
+  backButton: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  round: { borderRadius: 20 },
   title: { flex: 1, textAlign: 'center' },
 });

@@ -1,4 +1,5 @@
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView, type BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
+import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView, type BottomSheetBackdropProps, type BottomSheetBackgroundProps } from '@gorhom/bottom-sheet';
+import { GlassView } from 'expo-glass-effect';
 import type { ReactNode, RefObject } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { BackHandler, Platform, useWindowDimensions } from 'react-native';
@@ -7,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { layout, radius } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
+import { LIQUID_GLASS } from './Glass';
 import { Txt } from './Txt';
 
 export type SheetRef = RefObject<BottomSheetModal | null>;
@@ -30,6 +32,19 @@ interface SheetProps {
 
 function Backdrop(props: BottomSheetBackdropProps) {
   return <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} opacity={0.32} pressBehavior="close" />;
+}
+
+/** The sheet's pane: the system's liquid glass where there is one. */
+function GlassBackground({ style }: BottomSheetBackgroundProps) {
+  const theme = useTheme();
+  return (
+    <GlassView
+      glassEffectStyle="regular"
+      colorScheme={theme.isDark ? 'dark' : 'light'}
+      // The library hands its solid fill in with the style; the glass has to show through.
+      style={[style, { backgroundColor: 'transparent', borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, overflow: 'hidden' }]}
+    />
+  );
 }
 
 /**
@@ -66,7 +81,8 @@ export function Sheet({ sheetRef, title, children, onDismiss }: SheetProps) {
       // A picker opened from a form stacks on top of it and hands back when it closes.
       stackBehavior="push"
       backdropComponent={Backdrop}
-      backgroundStyle={{ backgroundColor: theme.surface, borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet }}
+      backgroundComponent={LIQUID_GLASS ? GlassBackground : undefined}
+      backgroundStyle={{ backgroundColor: theme.surfaceStrong, borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet }}
       handleIndicatorStyle={{ backgroundColor: theme.faint(0.18), width: 36 }}
       keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"

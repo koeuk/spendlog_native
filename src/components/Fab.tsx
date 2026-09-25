@@ -3,6 +3,7 @@ import { Platform, Pressable, StyleSheet } from 'react-native';
 
 import { useTheme } from '@/theme/useTheme';
 
+import { Glass } from './Glass';
 import { useTabBarInset } from './TabBar';
 
 interface FabProps {
@@ -20,13 +21,15 @@ export function Fab({ onPress, accessibilityLabel, icon: Icon = Plus }: FabProps
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
-      style={({ pressed }) => [styles.fab, { bottom: 20 + tabBarInset, backgroundColor: theme.accent, opacity: pressed ? 0.85 : 1 }]}>
+      style={({ pressed }) => [styles.fab, { bottom: 20 + tabBarInset, opacity: pressed ? 0.85 : 1 }]}>
+      <Glass interactive fill tint={theme.accent} style={styles.glass} />
       <Icon size={26} color={theme.onAccent} strokeWidth={2.4} />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  glass: { borderRadius: 29 },
   fab: {
     position: 'absolute',
     right: 20,

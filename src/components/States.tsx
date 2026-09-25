@@ -92,7 +92,7 @@ export function Skeleton({ height = 16, width = '100%', style, rounded = 10 }: S
 export function SkeletonCard({ lines = 3, style }: { lines?: number; style?: StyleProp<ViewStyle> }) {
   const theme = useTheme();
   return (
-    <View style={[styles.skeletonCard, { backgroundColor: theme.surface, borderRadius: radius.card }, style]}>
+    <View style={[styles.skeletonCard, { backgroundColor: theme.glassFill, borderColor: theme.glassRim, borderWidth: StyleSheet.hairlineWidth, borderRadius: radius.card }, style]}>
       {Array.from({ length: lines }, (_, index) => (
         <Skeleton key={index} width={index === 0 ? '55%' : index === lines - 1 ? '35%' : '80%'} height={index === 0 ? 20 : 14} />
       ))}

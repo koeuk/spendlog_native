@@ -21,6 +21,13 @@ export interface Theme {
   surface: string;
   /** The frosted panes that carry a blur: sheets. */
   surfaceStrong: string;
+  /** Liquid glass where the system has none: a see-through fill and a bright rim. */
+  glassFill: string;
+  glassRim: string;
+  /** Inputs sit inside glass, so they are a lighter frost rather than a solid. */
+  fieldFill: string;
+  /** The two soft washes of colour behind every screen, for the glass to refract. */
+  glow: [string, string];
   text: string;
   hairline: string;
   inputBorder: string;
@@ -71,6 +78,10 @@ export function buildTheme(isDark: boolean, locale: Locale, branding: Branding |
     ground: isDark ? palette.darkGround : (chosenGround ?? palette.lightGround),
     surface: isDark ? palette.darkSurface : palette.white,
     surfaceStrong: isDark ? rgba(palette.darkSurface, 0.94) : rgba(palette.white, 0.92),
+    glassFill: isDark ? rgba(palette.white, 0.07) : rgba(palette.white, 0.62),
+    glassRim: isDark ? rgba(palette.white, 0.12) : rgba(palette.white, 0.95),
+    fieldFill: isDark ? rgba(palette.white, 0.05) : rgba(palette.white, 0.72),
+    glow: [rgba(accent, isDark ? 0.26 : 0.2), isDark ? rgba('#3B82F6', 0.16) : rgba('#38BDF8', 0.16)],
     text,
     hairline: isDark ? rgba(palette.white, 0.08) : palette.lightHairline,
     inputBorder: rgba(text, isDark ? 0.14 : 0.1),

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { layout } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
+import { Backdrop } from './Glass';
 import { useTabBarInset } from './TabBar';
 
 interface ScreenProps extends PropsWithChildren {
@@ -41,7 +42,8 @@ export function Screen({
 
   if (!scroll) {
     return (
-      <View style={[styles.root, { backgroundColor: theme.ground, paddingTop: insets.top }, style]}>
+      <View style={[styles.root, { paddingTop: insets.top }, style]}>
+        <Backdrop />
         {header}
         <View style={[styles.root, { paddingHorizontal: padding }, contentContainerStyle]}>{children}</View>
       </View>
@@ -49,7 +51,8 @@ export function Screen({
   }
 
   return (
-    <View style={[styles.root, { backgroundColor: theme.ground, paddingTop: insets.top }, style]}>
+    <View style={[styles.root, { paddingTop: insets.top }, style]}>
+      <Backdrop />
       {header}
       <ScrollView
         keyboardShouldPersistTaps={keyboardShouldPersistTaps}
