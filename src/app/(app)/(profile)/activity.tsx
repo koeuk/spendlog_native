@@ -7,6 +7,7 @@ import { Header } from '@/components/Header';
 import { Screen } from '@/components/Screen';
 import { Segmented } from '@/components/Segmented';
 import { EmptyState, ErrorState, SkeletonCard } from '@/components/States';
+import { useTabBarInset } from '@/components/TabBar';
 import { useActivity } from '@/hooks/overview';
 import { useT } from '@/i18n';
 import { useSessionStore } from '@/store/session';
@@ -17,6 +18,7 @@ import { useTheme } from '@/theme/useTheme';
 export default function ActivityScreen() {
   const t = useT();
   const theme = useTheme();
+  const tabBarInset = useTabBarInset();
   const isAdmin = useSessionStore((state) => state.user?.is_admin ?? false);
   const [scope, setScope] = useState<'mine' | 'all'>('mine');
   const list = useActivity({ scope: isAdmin && scope === 'all' ? 'all' : undefined });
@@ -27,7 +29,7 @@ export default function ActivityScreen() {
       <FlatList
         data={list.items}
         keyExtractor={(entry) => entry.uuid}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, { paddingBottom: 24 + tabBarInset }]}
         onEndReachedThreshold={0.4}
         onEndReached={() => {
           if (list.hasNextPage && !list.isFetchingNextPage) void list.fetchNextPage();

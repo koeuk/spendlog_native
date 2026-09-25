@@ -43,7 +43,7 @@ export const layout = {
   pageInset: 16,
   /** Room a scrollable leaves at its bottom so its last row clears the FAB. */
   fabClearance: 96,
-  tabBarHeight: 58,
+  tabBarHeight: 62,
 } as const;
 
 export const fontSize = {

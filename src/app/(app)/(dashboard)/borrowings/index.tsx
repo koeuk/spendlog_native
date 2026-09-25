@@ -12,6 +12,7 @@ import { Screen } from '@/components/Screen';
 import { Segmented } from '@/components/Segmented';
 import { EmptyState, ErrorState, SkeletonCard } from '@/components/States';
 import { Txt } from '@/components/Txt';
+import { useTabBarInset } from '@/components/TabBar';
 import { useBorrowingSummary, useBorrowings } from '@/hooks/borrowings';
 import { useT } from '@/i18n';
 import { layout } from '@/theme/tokens';
@@ -22,6 +23,7 @@ import { formatMoney } from '@/utils/money';
 export default function BorrowingsScreen() {
   const t = useT();
   const theme = useTheme();
+  const tabBarInset = useTabBarInset();
   const router = useRouter();
   const [status, setStatus] = useState<BorrowingStatusFilter>('all');
   const summary = useBorrowingSummary();
@@ -34,7 +36,7 @@ export default function BorrowingsScreen() {
         <FlatList
           data={list.items}
           keyExtractor={(borrowing) => borrowing.uuid}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, { paddingBottom: layout.fabClearance + tabBarInset }]}
           onEndReachedThreshold={0.4}
           onEndReached={() => {
             if (list.hasNextPage && !list.isFetchingNextPage) void list.fetchNextPage();

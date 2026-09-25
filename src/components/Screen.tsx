@@ -5,6 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { layout } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
+import { useTabBarInset } from './TabBar';
+
 interface ScreenProps extends PropsWithChildren {
   /** Wrap the content in a ScrollView. Lists bring their own scrolling. */
   scroll?: boolean;
@@ -34,6 +36,7 @@ export function Screen({
 }: ScreenProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const tabBarInset = useTabBarInset();
   const padding = padded ? layout.pageInset : 0;
 
   if (!scroll) {
@@ -50,7 +53,7 @@ export function Screen({
       {header}
       <ScrollView
         keyboardShouldPersistTaps={keyboardShouldPersistTaps}
-        contentContainerStyle={[{ paddingHorizontal: padding, paddingBottom: bottomInset + 24 }, contentContainerStyle]}
+        contentContainerStyle={[{ paddingHorizontal: padding, paddingBottom: bottomInset + tabBarInset + 24 }, contentContainerStyle]}
         refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.accent} /> : undefined}>
         {children}
       </ScrollView>

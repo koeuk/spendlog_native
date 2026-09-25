@@ -11,6 +11,7 @@ import { Screen } from '@/components/Screen';
 import { useSheet } from '@/components/Sheet';
 import { EmptyState, ErrorState, SkeletonCard } from '@/components/States';
 import { Txt } from '@/components/Txt';
+import { useTabBarInset } from '@/components/TabBar';
 import { useAdminUsers } from '@/hooks/admin';
 import { useT } from '@/i18n';
 import { AdminUserSheet, STATUSES } from '@/sheets/AdminUserSheet';
@@ -22,6 +23,7 @@ import type { AdminUser } from '@/types/api';
 export default function AdminUsersScreen() {
   const t = useT();
   const theme = useTheme();
+  const tabBarInset = useTabBarInset();
   const list = useAdminUsers();
   const sheet = useSheet();
   const [editing, setEditing] = useState<AdminUser | null>(null);
@@ -40,7 +42,7 @@ export default function AdminUsersScreen() {
         <FlatList
           data={list.items}
           keyExtractor={(user) => user.uuid}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, { paddingBottom: layout.fabClearance + tabBarInset }]}
           onEndReachedThreshold={0.4}
           onEndReached={() => {
             if (list.hasNextPage && !list.isFetchingNextPage) void list.fetchNextPage();

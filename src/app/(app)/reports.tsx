@@ -12,7 +12,6 @@ import { IconButton } from '@/components/IconButton';
 import { OptionPicker } from '@/components/OptionPicker';
 import { PillButton } from '@/components/PillButton';
 import { Screen } from '@/components/Screen';
-import { Segmented } from '@/components/Segmented';
 import { Sheet, useSheet } from '@/components/Sheet';
 import { SpendingChart } from '@/components/SpendingChart';
 import { ErrorState, SkeletonCard } from '@/components/States';
@@ -50,6 +49,7 @@ export default function ReportsScreen() {
   const exporter = useExportReport();
   const exportSheet = useSheet();
   const data = report.data;
+  const hasRange = period !== 'all' && (data?.options.length ?? 0) > 0;
 
   const choosePeriod = (next: Granularity) => {
     setPeriod(next);
@@ -74,18 +74,29 @@ export default function ReportsScreen() {
         onRefresh={() => void report.refetch()}
         contentContainerStyle={styles.content}
         header={<Header large title={t('Reports')} right={<IconButton icon={Download} onPress={exportSheet.present} accessibilityLabel={t('Export')} />} />}>
-        <Segmented options={PERIODS.map((option) => ({ value: option.value, label: t(option.label) }))} value={period} onChange={choosePeriod} />
-        {data && period !== 'all' && data.options.length > 0 ? (
-          <OptionPicker
-            title={t('Period')}
-            value={data.anchor}
-            options={data.options}
-            onChange={(value) => {
-              setAt(value);
-              setPage(1);
-            }}
-          />
-        ) : null}
+        <View style={styles.filters}>
+          <View style={hasRange ? styles.periodPicker : styles.grow}>
+            <OptionPicker
+              title={t('Show by')}
+              value={period}
+              options={PERIODS.map((option) => ({ value: option.value, label: t(option.label) }))}
+              onChange={choosePeriod}
+            />
+          </View>
+          {data && hasRange ? (
+            <View style={styles.grow}>
+              <OptionPicker
+                title={t('Period')}
+                value={data.anchor}
+                options={data.options}
+                onChange={(value) => {
+                  setAt(value);
+                  setPage(1);
+                }}
+              />
+            </View>
+          ) : null}
+        </View>
 
         {report.isPending ? (
           <>
@@ -231,6 +242,9 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
+  filters: { flexDirection: 'row', gap: 10 },
+  periodPicker: { width: 124 },
+  grow: { flex: 1 },
   content: { gap: 14, paddingTop: 4 },
   section: { gap: 12 },
   stats: { flexDirection: 'row', gap: 12 },

@@ -3,6 +3,8 @@ import { Platform, Pressable, StyleSheet } from 'react-native';
 
 import { useTheme } from '@/theme/useTheme';
 
+import { useTabBarInset } from './TabBar';
+
 interface FabProps {
   onPress: () => void;
   accessibilityLabel: string;
@@ -12,12 +14,13 @@ interface FabProps {
 /** The one floating action on a tab: add something. */
 export function Fab({ onPress, accessibilityLabel, icon: Icon = Plus }: FabProps) {
   const theme = useTheme();
+  const tabBarInset = useTabBarInset();
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
-      style={({ pressed }) => [styles.fab, { backgroundColor: theme.accent, opacity: pressed ? 0.85 : 1 }]}>
+      style={({ pressed }) => [styles.fab, { bottom: 20 + tabBarInset, backgroundColor: theme.accent, opacity: pressed ? 0.85 : 1 }]}>
       <Icon size={26} color={theme.onAccent} strokeWidth={2.4} />
     </Pressable>
   );
@@ -27,7 +30,6 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     right: 20,
-    bottom: 20,
     width: 58,
     height: 58,
     borderRadius: 29,

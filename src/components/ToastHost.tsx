@@ -20,7 +20,7 @@ export function ToastHost() {
   if (toasts.length === 0) return null;
 
   return (
-    <View style={[styles.host, { bottom: insets.bottom + 76, pointerEvents: 'box-none' }]}>
+    <View style={[styles.host, { bottom: insets.bottom + 88, pointerEvents: 'box-none' }]}>
       {toasts.map((toast) => {
         const Icon = ICONS[toast.kind];
         const tint = toast.kind === 'error' ? theme.errorInk : toast.kind === 'success' ? theme.accent : theme.text;

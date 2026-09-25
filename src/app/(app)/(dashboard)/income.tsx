@@ -14,6 +14,7 @@ import { ProgressBar } from '@/components/ProgressBar';
 import { Screen } from '@/components/Screen';
 import { EmptyState, ErrorState, SkeletonCard } from '@/components/States';
 import { Txt } from '@/components/Txt';
+import { useTabBarInset } from '@/components/TabBar';
 import { useDeleteIncome, useIncomeSummary, useIncomes } from '@/hooks/incomes';
 import { useT } from '@/i18n';
 import { useLocaleStore } from '@/store/locale';
@@ -30,6 +31,7 @@ import { amountNumber, formatMoney } from '@/utils/money';
 export default function IncomeScreen() {
   const t = useT();
   const theme = useTheme();
+  const tabBarInset = useTabBarInset();
   const router = useRouter();
   const locale = useLocaleStore((state) => state.locale);
   const [month, setMonth] = useState(currentYm());
@@ -60,7 +62,7 @@ export default function IncomeScreen() {
         <FlatList
           data={groups}
           keyExtractor={(group) => group.key}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, { paddingBottom: layout.fabClearance + tabBarInset }]}
           onEndReachedThreshold={0.4}
           onEndReached={() => {
             if (list.hasNextPage && !list.isFetchingNextPage) void list.fetchNextPage();

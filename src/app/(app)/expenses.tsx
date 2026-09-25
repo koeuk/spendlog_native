@@ -14,6 +14,7 @@ import { Screen } from '@/components/Screen';
 import { useSheet } from '@/components/Sheet';
 import { EmptyState, ErrorState, SkeletonCard } from '@/components/States';
 import { Txt } from '@/components/Txt';
+import { useTabBarInset } from '@/components/TabBar';
 import { useDeleteExpense, useExpenses } from '@/hooks/expenses';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useT } from '@/i18n';
@@ -46,6 +47,7 @@ function groupByDay(expenses: Expense[]): DayGroup[] {
 export default function ExpensesScreen() {
   const t = useT();
   const theme = useTheme();
+  const tabBarInset = useTabBarInset();
   const router = useRouter();
   const locale = useLocaleStore((state) => state.locale);
   const isAdmin = useSessionStore((state) => state.user?.is_admin ?? false);
@@ -111,7 +113,7 @@ export default function ExpensesScreen() {
         <FlatList
           data={groups}
           keyExtractor={(group) => group.day || 'flat'}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, { paddingBottom: layout.fabClearance + tabBarInset }]}
           keyboardShouldPersistTaps="handled"
           onEndReachedThreshold={0.4}
           onEndReached={() => {
