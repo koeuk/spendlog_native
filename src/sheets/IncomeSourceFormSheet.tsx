@@ -69,7 +69,7 @@ function IncomeSourceForm({ source, close }: { source: IncomeSource | null; clos
   return (
     <View style={styles.form}>
       <Txt faint={0.6}>{t('Offered when you say where money came from.')}</Txt>
-      <Input label={t('Name')} value={form.values.name} onChangeText={(text) => form.set('name', text)} error={form.errors.name} maxLength={255} autoFocus autoCapitalize="sentences" />
+      <Input sheet label={t('Name')} value={form.values.name} onChangeText={(text) => form.set('name', text)} error={form.errors.name} maxLength={255} autoFocus autoCapitalize="sentences" />
       {/* Only worth asking where there is history to carry, and only once the
           name has actually changed. */}
       {renaming && source.uses > 0 ? (

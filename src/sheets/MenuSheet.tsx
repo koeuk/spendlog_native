@@ -1,11 +1,13 @@
 import { useRouter } from 'expo-router';
-import { Banknote, Handshake, History, Moon, PiggyBank, Repeat, Settings, Sun, Tag, Tags, Users, type LucideIcon } from 'lucide-react-native';
+import { Banknote, Handshake, History, Languages, Moon, PiggyBank, Repeat, Settings, Sun, Tag, Tags, Users, type LucideIcon } from 'lucide-react-native';
 import { StyleSheet, Switch, View } from 'react-native';
 
 import { ListRow } from '@/components/ListRow';
+import { Segmented } from '@/components/Segmented';
 import { Sheet, type SheetRef } from '@/components/Sheet';
 import { Txt } from '@/components/Txt';
 import { useT } from '@/i18n';
+import { LOCALES, useLocaleStore } from '@/store/locale';
 import { useSessionStore } from '@/store/session';
 import { useThemeStore } from '@/store/theme';
 import { useTheme } from '@/theme/useTheme';
@@ -40,6 +42,8 @@ export function MenuSheet({ sheetRef }: { sheetRef: SheetRef }) {
   const router = useRouter();
   const isAdmin = useSessionStore((state) => state.user?.is_admin ?? false);
   const setMode = useThemeStore((state) => state.setMode);
+  const locale = useLocaleStore((state) => state.locale);
+  const setLocale = useLocaleStore((state) => state.setLocale);
   const rows = ENTRIES.filter((entry) => isAdmin || !entry.admin);
 
   return (
@@ -63,6 +67,15 @@ export function MenuSheet({ sheetRef }: { sheetRef: SheetRef }) {
             />
           );
         })}
+        <View style={[styles.themeRow, styles.divided, { borderBottomColor: theme.hairline }]}>
+          <Languages size={22} color={theme.faint(0.75)} />
+          <Txt weight="medium" style={styles.themeLabel}>
+            {t('Language')}
+          </Txt>
+          <View style={styles.languages}>
+            <Segmented options={LOCALES.map((option) => ({ value: option.code, label: option.label }))} value={locale} onChange={setLocale} />
+          </View>
+        </View>
         <View style={styles.themeRow}>
           {theme.isDark ? <Moon size={22} color={theme.faint(0.75)} /> : <Sun size={22} color={theme.faint(0.75)} />}
           <Txt weight="medium" style={styles.themeLabel}>
@@ -78,4 +91,6 @@ export function MenuSheet({ sheetRef }: { sheetRef: SheetRef }) {
 const styles = StyleSheet.create({
   themeRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, minHeight: 56 },
   themeLabel: { flex: 1 },
+  divided: { borderBottomWidth: StyleSheet.hairlineWidth },
+  languages: { width: 176 },
 });
