@@ -7,7 +7,6 @@ import { Avatar } from '@/components/Avatar';
 import { Card } from '@/components/Card';
 import { ExpenseRow } from '@/components/ExpenseRow';
 import { Fab } from '@/components/Fab';
-import { Header } from '@/components/Header';
 import { MonthStepper } from '@/components/MonthStepper';
 import { PillButton } from '@/components/PillButton';
 import { ProgressBar } from '@/components/ProgressBar';
@@ -16,6 +15,7 @@ import { Segmented } from '@/components/Segmented';
 import { SpendingChart } from '@/components/SpendingChart';
 import { ErrorState, Skeleton, SkeletonCard } from '@/components/States';
 import { Txt } from '@/components/Txt';
+import { useIncomeSummary } from '@/hooks/incomes';
 import { useDashboard, useReport } from '@/hooks/overview';
 import { useT } from '@/i18n';
 import { useLocaleStore } from '@/store/locale';
@@ -33,6 +33,13 @@ const GRANULARITIES: { value: Granularity; label: string }[] = [
   { value: 'year', label: 'Year' },
   { value: 'all', label: 'All' },
 ];
+
+/** The salutation for the hour of the day on the device's clock. */
+function greeting(hour: number) {
+  if (hour < 12) return 'Good morning!';
+  if (hour < 18) return 'Good afternoon!';
+  return 'Good evening!';
+}
 
 /** The payoff screen: how the month is going, in one scroll. */
 export default function DashboardScreen() {
@@ -58,15 +65,19 @@ export default function DashboardScreen() {
         bottomInset={layout.fabClearance}
         contentContainerStyle={styles.content}
         header={
-          <Header
-            large
-            title={t('Home')}
-            right={
-              <Pressable accessibilityRole="button" accessibilityLabel={t('Settings')} onPress={() => router.push('/settings')}>
-                <Avatar name={user?.name ?? ''} url={user?.avatar_url} size={38} />
-              </Pressable>
-            }
-          />
+          <View style={styles.greeting}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t('Settings')} onPress={() => router.push('/settings')}>
+              <Avatar name={user?.name ?? ''} url={user?.avatar_url} size={44} />
+            </Pressable>
+            <View style={styles.greetingText}>
+              <Txt variant="label" faint={0.55} numberOfLines={1}>
+                {t(greeting(new Date().getHours()))}
+              </Txt>
+              <Txt variant="title" numberOfLines={1}>
+                {user?.name ?? ''}
+              </Txt>
+            </View>
+          </View>
         }>
         <MonthStepper month={month} onChange={setMonth} />
         {dashboard.isPending ? (
@@ -110,6 +121,12 @@ function DashboardBody({ data, month, onOpenExpense }: { data: Dashboard; month:
   const isCurrent = month === data.current_month;
   const negativeBalance = isNegative(data.balance);
   const plannedSavings = amountNumber(data.savings.planned) > 0;
+  // The dashboard payload carries the month's income total but not where it
+  // came from, so the breakdown the card leans on comes from the income
+  // summary. It is the same call the income screen makes, so it is warm.
+  const incomeSummary = useIncomeSummary(month);
+  const topSource = incomeSummary.data?.by_source[0] ?? null;
+  const incomeTotal = amountNumber(data.income.total);
 
   return (
     <>
@@ -164,32 +181,44 @@ function DashboardBody({ data, month, onOpenExpense }: { data: Dashboard; month:
         </Card>
       </View>
 
-      <Pressable accessibilityRole="button" onPress={() => router.push('/savings')}>
-        <Card style={styles.section}>
-          <View style={styles.rowBetween}>
-            <Txt variant="heading">{t('Savings')}</Txt>
-            <ChevronRight size={18} color={theme.faint(0.3)} />
-          </View>
-          <View style={styles.rowBetween}>
-            <View>
+      <View style={styles.pair}>
+        <Pressable accessibilityRole="button" style={styles.halfPress} onPress={() => router.push('/savings')}>
+          <Card style={styles.halfCard}>
+            <View style={styles.rowBetween}>
               <Txt variant="label" faint={0.6}>
-                {t('Saved this month')}
+                {t('Savings')}
               </Txt>
-              <Txt variant="heading">
-                {formatMoney(data.savings.saved_this_month)}
-                {plannedSavings ? <Txt faint={0.5}> {t('of')} {formatMoney(data.savings.planned)}</Txt> : null}
-              </Txt>
+              <ChevronRight size={16} color={theme.faint(0.3)} />
             </View>
-            <View style={styles.alignEnd}>
+            <Txt variant="xl" numberOfLines={1} adjustsFontSizeToFit>
+              {formatMoney(data.savings.saved_this_month)}
+            </Txt>
+            <Txt variant="caption" faint={0.5} numberOfLines={1}>
+              {t('Total saved')} {formatMoney(data.savings.total_saved, 'signed')}
+            </Txt>
+            {plannedSavings ? <ProgressBar percent={data.savings.percent} color={theme.accent} height={6} /> : null}
+          </Card>
+        </Pressable>
+        <Pressable accessibilityRole="button" style={styles.halfPress} onPress={() => router.push('/income')}>
+          <Card style={styles.halfCard}>
+            <View style={styles.rowBetween}>
               <Txt variant="label" faint={0.6}>
-                {t('Total saved')}
+                {t('Income')}
               </Txt>
-              <Txt variant="heading">{formatMoney(data.savings.total_saved, 'signed')}</Txt>
+              <ChevronRight size={16} color={theme.faint(0.3)} />
             </View>
-          </View>
-          {plannedSavings ? <ProgressBar percent={data.savings.percent} color={theme.accent} /> : null}
-        </Card>
-      </Pressable>
+            <Txt variant="xl" numberOfLines={1} adjustsFontSizeToFit>
+              {formatMoney(data.income.total)}
+            </Txt>
+            {topSource ? (
+              <Txt variant="caption" faint={0.5} numberOfLines={1}>
+                {t('Top source')} {topSource.source}
+              </Txt>
+            ) : null}
+            {topSource && incomeTotal > 0 ? <ProgressBar percent={(amountNumber(topSource.total) / incomeTotal) * 100} color={theme.accent} height={6} /> : null}
+          </Card>
+        </Pressable>
+      </View>
 
       <Card style={styles.section}>
         <Txt variant="heading">{t('By category')}</Txt>
@@ -243,13 +272,18 @@ function DashboardBody({ data, month, onOpenExpense }: { data: Dashboard; month:
 
 const styles = StyleSheet.create({
   content: { gap: 14, paddingTop: 4 },
+  greeting: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: layout.pageInset, paddingTop: 12, paddingBottom: 10 },
+  greetingText: { flex: 1 },
   section: { gap: 12 },
   pair: { flexDirection: 'row', gap: 14 },
   half: { flex: 1, gap: 4 },
+  // The pressable carries the width, the card fills it: both halves then end up
+  // the same height whether or not each one has a bar to show.
+  halfPress: { flex: 1 },
+  halfCard: { flex: 1, gap: 4 },
   budgetRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   grow: { flex: 1 },
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  alignEnd: { alignItems: 'flex-end' },
   slice: { gap: 6 },
   sliceName: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
   sliceAmount: { minWidth: 72, textAlign: 'right' },
