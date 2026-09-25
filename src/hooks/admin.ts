@@ -28,6 +28,11 @@ export function useAdminUsers() {
   return useInfiniteList(keys.adminUsers, (page) => listAdminUsers(page));
 }
 
+/** Accounts matching a search, for picking one person out of many. */
+export function useAdminUserSearch(search: string, enabled = true) {
+  return useInfiniteList([...keys.adminUsers, 'search', search], (page) => listAdminUsers(page, search), enabled);
+}
+
 /**
  * One account for its edit page. The API has no single-user route, so it is
  * read from the users list: already cached when the page is opened from there,

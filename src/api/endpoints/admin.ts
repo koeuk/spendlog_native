@@ -16,8 +16,9 @@ import { appendFile, type PickedFile } from '../multipart';
 
 // Users -----------------------------------------------------------------------
 
-export async function listAdminUsers(page = 1): Promise<Paginated<AdminUser>> {
-  const { data } = await api.get<Paginated<AdminUser>>('/admin/users', { params: { page } });
+/** Every account, a page at a time; `search` narrows to names, usernames and emails containing it. */
+export async function listAdminUsers(page = 1, search?: string): Promise<Paginated<AdminUser>> {
+  const { data } = await api.get<Paginated<AdminUser>>('/admin/users', { params: { page, search: search || undefined } });
   return data;
 }
 

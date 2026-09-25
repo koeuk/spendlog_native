@@ -11,6 +11,11 @@ export interface ActivityFilters {
    * quietly empty page.
    */
   subject?: string[];
+  /** Admin only (or the account itself): one person's log, by uuid. Implies `scope: 'all'`. */
+  user?: string;
+  /** `YYYY-MM-DD` covers the whole day; `YYYY-MM-DDTHH:mm` is exact. */
+  from?: string;
+  to?: string;
   per_page?: number;
 }
 
@@ -19,6 +24,9 @@ export async function listActivity(filters: ActivityFilters, page = 1): Promise<
     params: {
       scope: filters.scope,
       subject: filters.subject?.length ? filters.subject.join(',') : undefined,
+      user: filters.user,
+      from: filters.from,
+      to: filters.to,
       per_page: filters.per_page ?? 50,
       page,
     },
