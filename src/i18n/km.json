@@ -718,5 +718,16 @@
   "From :date": "ពី :date",
   "Until :date": "រហូតដល់ :date",
   "Clear filters": "សម្អាតតម្រង",
-  "Nothing matches these filters.": "គ្មានអ្វីត្រូវនឹងតម្រងទាំងនេះទេ។"
+  "Nothing matches these filters.": "គ្មានអ្វីត្រូវនឹងតម្រងទាំងនេះទេ។",
+  "Skip": "រំលង",
+  "Next": "បន្ទាប់",
+  "Get started": "ចាប់ផ្តើម",
+  "Log every expense": "កត់ត្រារាល់ការចំណាយ",
+  "Jot down what you spend in seconds, in dollars or riel.": "កត់ត្រាអ្វីដែលអ្នកចំណាយក្នុងរយៈពេលប៉ុន្មានវិនាទី ជាដុល្លារ ឬរៀល។",
+  "Budgets that keep you on track": "ថវិកាដែលជួយឱ្យអ្នកនៅលើផ្លូវត្រូវ",
+  "Set a limit for each category and see what is left at a glance.": "កំណត់ដែនកំណត់សម្រាប់ប្រភេទនីមួយៗ ហើយមើលឃើញភ្លាមៗថានៅសល់ប៉ុន្មាន។",
+  "See where your money goes": "មើលថាលុយរបស់អ្នកទៅណា",
+  "Weekly, monthly and yearly reports, ready to export.": "របាយការណ៍ប្រចាំសប្តាហ៍ ប្រចាំខែ និងប្រចាំឆ្នាំ រួចរាល់សម្រាប់នាំចេញ។",
+  "All your money in one place": "លុយទាំងអស់របស់អ្នកនៅកន្លែងតែមួយ",
+  "Savings, income and borrowing sit beside your spending.": "ការសន្សំ ចំណូល និងការខ្ចីប្រាក់ នៅក្បែរការចំណាយរបស់អ្នក។"
 }

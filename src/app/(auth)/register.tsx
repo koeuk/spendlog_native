@@ -74,7 +74,7 @@ export default function RegisterScreen() {
         onSubmitEditing={submit}
       />
       <PillButton label={t('Create account')} onPress={submit} loading={form.submitting} block />
-      <Pressable accessibilityRole="link" onPress={() => router.back()} style={styles.link}>
+      <Pressable accessibilityRole="link" onPress={() => (router.canGoBack() ? router.back() : router.replace('/login'))} style={styles.link}>
         <Txt variant="label" color={theme.accent} align="center">
           {t('Already have an account? Sign in')}
         </Txt>
