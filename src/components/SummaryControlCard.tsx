@@ -1,15 +1,18 @@
-import { useRouter } from 'expo-router';
-import { ChevronRight, Settings } from 'lucide-react-native';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useRouter } from "expo-router";
+import { ChevronRight, Settings } from "lucide-react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 
-import { Card } from '@/components/Card';
-import { ProgressBar } from '@/components/ProgressBar';
-import { Txt } from '@/components/Txt';
-import { useT } from '@/i18n';
-import { useDashboardCardsStore, type SummaryCardId } from '@/store/dashboardCards';
-import { useTheme } from '@/theme/useTheme';
-import type { Dashboard, Money } from '@/types/api';
-import { amountNumber, formatMoney } from '@/utils/money';
+import { Card } from "@/components/Card";
+import { ProgressBar } from "@/components/ProgressBar";
+import { Txt } from "@/components/Txt";
+import { useT } from "@/i18n";
+import {
+  useDashboardCardsStore,
+  type SummaryCardId,
+} from "@/store/dashboardCards";
+import { useTheme } from "@/theme/useTheme";
+import type { Dashboard, Money } from "@/types/api";
+import { amountNumber, formatMoney } from "@/utils/money";
 
 interface SummaryControlCardProps {
   data: Dashboard;
@@ -38,8 +41,12 @@ export function SummaryControlCard({
   const cards = useDashboardCardsStore((state) => state.cards);
   const visibleCards = cards.filter((c) => c.visible);
 
-  const tileBg = theme.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)';
-  const tileBorder = theme.isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+  const tileBg = theme.isDark
+    ? "rgba(255, 255, 255, 0.05)"
+    : "rgba(0, 0, 0, 0.03)";
+  const tileBorder = theme.isDark
+    ? "rgba(255, 255, 255, 0.08)"
+    : "rgba(0, 0, 0, 0.06)";
 
   const pairs: SummaryCardId[][] = [];
   for (let i = 0; i < visibleCards.length; i += 2) {
@@ -48,38 +55,65 @@ export function SummaryControlCard({
 
   const renderTile = (id: SummaryCardId) => {
     switch (id) {
-      case 'today':
+      case "today":
         return (
-          <View key="today" style={[styles.tile, { backgroundColor: tileBg, borderColor: tileBorder }]}>
+          <View
+            key="today"
+            style={[
+              styles.tile,
+              { backgroundColor: tileBg, borderColor: tileBorder },
+            ]}
+          >
             <Txt variant="label" faint={0.6}>
-              {t('Today')}
+              {t("Today")}
             </Txt>
             <Txt variant="xl" numberOfLines={1} adjustsFontSizeToFit>
               {formatMoney(data.today.total)}
             </Txt>
           </View>
         );
-      case 'balance':
+      case "balance":
         return (
-          <View key="balance" style={[styles.tile, { backgroundColor: tileBg, borderColor: tileBorder }]}>
+          <View
+            key="balance"
+            style={[
+              styles.tile,
+              { backgroundColor: tileBg, borderColor: tileBorder },
+            ]}
+          >
             <Txt variant="label" faint={0.6}>
-              {t('Balance')}
+              {t("Balance")}
             </Txt>
-            <Txt variant="xl" color={negativeBalance ? theme.errorInk : theme.text} numberOfLines={1} adjustsFontSizeToFit>
-              {formatMoney(data.balance, 'signed')}
+            <Txt
+              variant="xl"
+              color={negativeBalance ? theme.errorInk : theme.text}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
+              {formatMoney(data.balance, "signed")}
             </Txt>
             <Txt variant="caption" faint={0.5}>
-              {t('Income')} {formatMoney(data.income.total)}
+              {t("Income")} {formatMoney(data.income.total)}
             </Txt>
           </View>
         );
-      case 'savings':
+      case "savings":
         return (
-          <Pressable key="savings" accessibilityRole="button" style={styles.tilePress} onPress={() => router.push('/savings')}>
-            <View style={[styles.tile, { backgroundColor: tileBg, borderColor: tileBorder }]}>
+          <Pressable
+            key="savings"
+            accessibilityRole="button"
+            style={styles.tilePress}
+            onPress={() => router.push("/savings")}
+          >
+            <View
+              style={[
+                styles.tile,
+                { backgroundColor: tileBg, borderColor: tileBorder },
+              ]}
+            >
               <View style={styles.rowBetween}>
                 <Txt variant="label" faint={0.6}>
-                  {t('Savings')}
+                  {t("Savings")}
                 </Txt>
                 <ChevronRight size={16} color={theme.faint(0.3)} />
               </View>
@@ -87,19 +121,36 @@ export function SummaryControlCard({
                 {formatMoney(data.savings.saved_this_month)}
               </Txt>
               <Txt variant="caption" faint={0.5} numberOfLines={1}>
-                {t('Total saved')} {formatMoney(data.savings.total_saved, 'signed')}
+                {t("Total saved")}{" "}
+                {formatMoney(data.savings.total_saved, "signed")}
               </Txt>
-              {plannedSavings ? <ProgressBar percent={data.savings.percent} color={theme.accent} height={6} /> : null}
+              {plannedSavings ? (
+                <ProgressBar
+                  percent={data.savings.percent}
+                  color={theme.accent}
+                  height={6}
+                />
+              ) : null}
             </View>
           </Pressable>
         );
-      case 'income':
+      case "income":
         return (
-          <Pressable key="income" accessibilityRole="button" style={styles.tilePress} onPress={() => router.push('/income')}>
-            <View style={[styles.tile, { backgroundColor: tileBg, borderColor: tileBorder }]}>
+          <Pressable
+            key="income"
+            accessibilityRole="button"
+            style={styles.tilePress}
+            onPress={() => router.push("/income")}
+          >
+            <View
+              style={[
+                styles.tile,
+                { backgroundColor: tileBg, borderColor: tileBorder },
+              ]}
+            >
               <View style={styles.rowBetween}>
                 <Txt variant="label" faint={0.6}>
-                  {t('Income')}
+                  {t("Income")}
                 </Txt>
                 <ChevronRight size={16} color={theme.faint(0.3)} />
               </View>
@@ -108,11 +159,15 @@ export function SummaryControlCard({
               </Txt>
               {topSource ? (
                 <Txt variant="caption" faint={0.5} numberOfLines={1}>
-                  {t('Top source')} {topSource.source}
+                  {t("Top source")} {topSource.source}
                 </Txt>
               ) : null}
               {topSource && incomeTotal > 0 ? (
-                <ProgressBar percent={(amountNumber(topSource.total) / incomeTotal) * 100} color={theme.accent} height={6} />
+                <ProgressBar
+                  percent={(amountNumber(topSource.total) / incomeTotal) * 100}
+                  color={theme.accent}
+                  height={6}
+                />
               ) : null}
             </View>
           </Pressable>
@@ -124,20 +179,21 @@ export function SummaryControlCard({
     <Card style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerTitles}>
-          <Txt variant="heading">{t('Card summary')}</Txt>
+          <Txt variant="heading">{t("Card summary")}</Txt>
           <Txt variant="label" faint={0.55}>
-            {t('Overview of your cash flow')}
+            {t("Overview of your cash flow")}
           </Txt>
         </View>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={t('Manage cards')}
+          accessibilityLabel={t("Manage cards")}
           onPress={onOpenManage}
           style={({ pressed }) => [
             styles.controlGear,
-            { backgroundColor: '#0084FF' },
+            { backgroundColor: "#0084FF" },
             pressed && { opacity: 0.8 },
-          ]}>
+          ]}
+        >
           <Settings size={18} color="#FFFFFF" strokeWidth={2.2} />
         </Pressable>
       </View>
@@ -158,9 +214,9 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   headerTitles: {
     flex: 1,
@@ -170,9 +226,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#0084FF',
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#0084FF",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.35,
     shadowRadius: 4,
@@ -182,7 +238,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   tilePair: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 10,
   },
   tilePress: {
@@ -194,12 +250,12 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: StyleSheet.hairlineWidth,
     gap: 4,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   rowBetween: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     gap: 8,
   },
 });

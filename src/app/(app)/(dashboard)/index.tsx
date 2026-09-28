@@ -143,79 +143,79 @@ function DashboardBody({ data, month, onOpenExpense }: { data: Dashboard; month:
     cardPairs.push(visibleCards.slice(i, i + 2).map((c) => c.id));
   }
 
-  const renderSummaryCard = (id: SummaryCardId) => {
-    switch (id) {
-      case 'today':
-        return (
-          <Card key="today" style={styles.half}>
-            <Txt variant="label" faint={0.6}>
-              {t('Today')}
-            </Txt>
-            <Txt variant="xl" numberOfLines={1} adjustsFontSizeToFit>
-              {formatMoney(data.today.total)}
-            </Txt>
-          </Card>
-        );
-      case 'balance':
-        return (
-          <Card key="balance" style={styles.half}>
-            <Txt variant="label" faint={0.6}>
-              {t('Balance')}
-            </Txt>
-            <Txt variant="xl" color={negativeBalance ? theme.errorInk : theme.text} numberOfLines={1} adjustsFontSizeToFit>
-              {formatMoney(data.balance, 'signed')}
-            </Txt>
-            <Txt variant="caption" faint={0.5}>
-              {t('Income')} {formatMoney(data.income.total)}
-            </Txt>
-          </Card>
-        );
-      case 'savings':
-        return (
-          <Pressable key="savings" accessibilityRole="button" style={styles.halfPress} onPress={() => router.push('/savings')}>
-            <Card style={styles.halfCard}>
-              <View style={styles.rowBetween}>
-                <Txt variant="label" faint={0.6}>
-                  {t('Savings')}
-                </Txt>
-                <ChevronRight size={16} color={theme.faint(0.3)} />
-              </View>
-              <Txt variant="xl" numberOfLines={1} adjustsFontSizeToFit>
-                {formatMoney(data.savings.saved_this_month)}
-              </Txt>
-              <Txt variant="caption" faint={0.5} numberOfLines={1}>
-                {t('Total saved')} {formatMoney(data.savings.total_saved, 'signed')}
-              </Txt>
-              {plannedSavings ? <ProgressBar percent={data.savings.percent} color={theme.accent} height={6} /> : null}
-            </Card>
-          </Pressable>
-        );
-      case 'income':
-        return (
-          <Pressable key="income" accessibilityRole="button" style={styles.halfPress} onPress={() => router.push('/income')}>
-            <Card style={styles.halfCard}>
-              <View style={styles.rowBetween}>
-                <Txt variant="label" faint={0.6}>
-                  {t('Income')}
-                </Txt>
-                <ChevronRight size={16} color={theme.faint(0.3)} />
-              </View>
-              <Txt variant="xl" numberOfLines={1} adjustsFontSizeToFit>
-                {formatMoney(data.income.total)}
-              </Txt>
-              {topSource ? (
-                <Txt variant="caption" faint={0.5} numberOfLines={1}>
-                  {t('Top source')} {topSource.source}
-                </Txt>
-              ) : null}
-              {topSource && incomeTotal > 0 ? (
-                <ProgressBar percent={(amountNumber(topSource.total) / incomeTotal) * 100} color={theme.accent} height={6} />
-              ) : null}
-            </Card>
-          </Pressable>
-        );
-    }
-  };
+  // const renderSummaryCard = (id: SummaryCardId) => {
+  //   switch (id) {
+  //     case 'today':
+  //       return (
+  //         <Card key="today" style={styles.half}>
+  //           <Txt variant="label" faint={0.6}>
+  //             {t('Today')}
+  //           </Txt>
+  //           <Txt variant="xl" numberOfLines={1} adjustsFontSizeToFit>
+  //             {formatMoney(data.today.total)}
+  //           </Txt>
+  //         </Card>
+  //       );
+  //     case 'balance':
+  //       return (
+  //         <Card key="balance" style={styles.half}>
+  //           <Txt variant="label" faint={0.6}>
+  //             {t('Balance')}
+  //           </Txt>
+  //           <Txt variant="xl" color={negativeBalance ? theme.errorInk : theme.text} numberOfLines={1} adjustsFontSizeToFit>
+  //             {formatMoney(data.balance, 'signed')}
+  //           </Txt>
+  //           <Txt variant="caption" faint={0.5}>
+  //             {t('Income')} {formatMoney(data.income.total)}
+  //           </Txt>
+  //         </Card>
+  //       );
+  //     case 'savings':
+  //       return (
+  //         <Pressable key="savings" accessibilityRole="button" style={styles.halfPress} onPress={() => router.push('/savings')}>
+  //           <Card style={styles.halfCard}>
+  //             <View style={styles.rowBetween}>
+  //               <Txt variant="label" faint={0.6}>
+  //                 {t('Savings')}
+  //               </Txt>
+  //               <ChevronRight size={16} color={theme.faint(0.3)} />
+  //             </View>
+  //             <Txt variant="xl" numberOfLines={1} adjustsFontSizeToFit>
+  //               {formatMoney(data.savings.saved_this_month)}
+  //             </Txt>
+  //             <Txt variant="caption" faint={0.5} numberOfLines={1}>
+  //               {t('Total saved')} {formatMoney(data.savings.total_saved, 'signed')}
+  //             </Txt>
+  //             {plannedSavings ? <ProgressBar percent={data.savings.percent} color={theme.accent} height={6} /> : null}
+  //           </Card>
+  //         </Pressable>
+  //       );
+  //     case 'income':
+  //       return (
+  //         <Pressable key="income" accessibilityRole="button" style={styles.halfPress} onPress={() => router.push('/income')}>
+  //           <Card style={styles.halfCard}>
+  //             <View style={styles.rowBetween}>
+  //               <Txt variant="label" faint={0.6}>
+  //                 {t('Incomesd')}
+  //               </Txt>
+  //               <ChevronRight size={16} color={theme.faint(0.3)} />
+  //             </View>
+  //             <Txt variant="xl" numberOfLines={1} adjustsFontSizeToFit>
+  //               {formatMoney(data.income.total)}
+  //             </Txt>
+  //             {topSource ? (
+  //               <Txt variant="caption" faint={0.5} numberOfLines={1}>
+  //                 {t('Top source')} {topSource.source}
+  //               </Txt>
+  //             ) : null}
+  //             {topSource && incomeTotal > 0 ? (
+  //               <ProgressBar percent={(amountNumber(topSource.total) / incomeTotal) * 100} color={theme.accent} height={6} />
+  //             ) : null}
+  //           </Card>
+  //         </Pressable>
+  //       );
+  //   }
+  // };
 
   return (
     <>
@@ -248,11 +248,11 @@ function DashboardBody({ data, month, onOpenExpense }: { data: Dashboard; month:
         )}
       </Card>
 
-      {cardPairs.map((pair, idx) => (
+      {/* {cardPairs.map((pair, idx) => (
         <View key={idx} style={styles.pair}>
           {pair.map((cardId) => renderSummaryCard(cardId))}
         </View>
-      ))}
+      ))} */}
 
       <SummaryControlCard
         data={data}
