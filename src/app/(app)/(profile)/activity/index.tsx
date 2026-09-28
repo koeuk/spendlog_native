@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { History, SlidersHorizontal, X } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
@@ -31,6 +32,7 @@ import { longDate } from '@/utils/dates';
 export default function ActivityScreen() {
   const t = useT();
   const theme = useTheme();
+  const router = useRouter();
   const locale = useLocaleStore((state) => state.locale);
   const tabBarInset = useTabBarInset();
   const isAdmin = useSessionStore((state) => state.user?.is_admin ?? false);
@@ -43,7 +45,6 @@ export default function ActivityScreen() {
     from: momentParam(filters.from),
     to: momentParam(filters.to),
   });
-  const [expanded, setExpanded] = useState<string | null>(null);
   const filtered = hasActivityFilters(filters);
 
   const moment = (value: ActivityMoment) => `${longDate(value.date, locale)}${value.time ? ` ${value.time}` : ''}`;
@@ -94,8 +95,7 @@ export default function ActivityScreen() {
               entry={entry}
               first={index === 0}
               last={index === list.items.length - 1}
-              expanded={expanded === entry.uuid}
-              onToggle={() => setExpanded(expanded === entry.uuid ? null : entry.uuid)}
+              onPress={() => router.push({ pathname: '/activity/[uuid]', params: { uuid: entry.uuid } })}
               actor={person.kind === 'all' ? (entry.user?.name ?? null) : null}
             />
           )}

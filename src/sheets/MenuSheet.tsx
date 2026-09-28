@@ -27,7 +27,7 @@ const ENTRIES: Entry[] = [
   { icon: Handshake, label: 'Borrowing', branch: '(dashboard)', screen: 'borrowings/index' },
   { icon: Tags, label: 'Categories', branch: '(profile)', screen: 'categories' },
   { icon: Tag, label: 'Sources', branch: '(profile)', screen: 'income-sources' },
-  { icon: History, label: 'Activity log', branch: '(profile)', screen: 'activity' },
+  { icon: History, label: 'Activity log', branch: '(profile)', screen: 'activity/index' },
   { icon: Settings, label: 'Settings', branch: '(profile)', screen: 'settings' },
   { icon: Users, label: 'Users', branch: '(profile)', screen: 'admin-users', admin: true },
 ];
