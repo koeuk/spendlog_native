@@ -12,6 +12,7 @@ import { PillButton } from '@/components/PillButton';
 import { ProgressBar } from '@/components/ProgressBar';
 import { Screen } from '@/components/Screen';
 import { Segmented } from '@/components/Segmented';
+import { useSheet } from '@/components/Sheet';
 import { SpendingChart } from '@/components/SpendingChart';
 import { ErrorState, Skeleton, SkeletonCard } from '@/components/States';
 import { Txt } from '@/components/Txt';
@@ -19,6 +20,9 @@ import { useIncomeSummary } from '@/hooks/incomes';
 import { useOpenFromMenu } from '@/hooks/useOpenFromMenu';
 import { useDashboard, useReport } from '@/hooks/overview';
 import { useT } from '@/i18n';
+import { SummaryControlCard } from '@/components/SummaryControlCard';
+import { ManageCardsSheet } from '@/sheets/ManageCardsSheet';
+import { useDashboardCardsStore, type SummaryCardId } from '@/store/dashboardCards';
 import { useLocaleStore } from '@/store/locale';
 import { useSessionStore } from '@/store/session';
 import { layout } from '@/theme/tokens';
@@ -130,6 +134,89 @@ function DashboardBody({ data, month, onOpenExpense }: { data: Dashboard; month:
   const topSource = incomeSummary.data?.by_source[0] ?? null;
   const incomeTotal = amountNumber(data.income.total);
 
+  const manageCardsSheet = useSheet();
+  const summaryCards = useDashboardCardsStore((state) => state.cards);
+  const visibleCards = summaryCards.filter((card) => card.visible);
+
+  const cardPairs: SummaryCardId[][] = [];
+  for (let i = 0; i < visibleCards.length; i += 2) {
+    cardPairs.push(visibleCards.slice(i, i + 2).map((c) => c.id));
+  }
+
+  const renderSummaryCard = (id: SummaryCardId) => {
+    switch (id) {
+      case 'today':
+        return (
+          <Card key="today" style={styles.half}>
+            <Txt variant="label" faint={0.6}>
+              {t('Today')}
+            </Txt>
+            <Txt variant="xl" numberOfLines={1} adjustsFontSizeToFit>
+              {formatMoney(data.today.total)}
+            </Txt>
+          </Card>
+        );
+      case 'balance':
+        return (
+          <Card key="balance" style={styles.half}>
+            <Txt variant="label" faint={0.6}>
+              {t('Balance')}
+            </Txt>
+            <Txt variant="xl" color={negativeBalance ? theme.errorInk : theme.text} numberOfLines={1} adjustsFontSizeToFit>
+              {formatMoney(data.balance, 'signed')}
+            </Txt>
+            <Txt variant="caption" faint={0.5}>
+              {t('Income')} {formatMoney(data.income.total)}
+            </Txt>
+          </Card>
+        );
+      case 'savings':
+        return (
+          <Pressable key="savings" accessibilityRole="button" style={styles.halfPress} onPress={() => router.push('/savings')}>
+            <Card style={styles.halfCard}>
+              <View style={styles.rowBetween}>
+                <Txt variant="label" faint={0.6}>
+                  {t('Savings')}
+                </Txt>
+                <ChevronRight size={16} color={theme.faint(0.3)} />
+              </View>
+              <Txt variant="xl" numberOfLines={1} adjustsFontSizeToFit>
+                {formatMoney(data.savings.saved_this_month)}
+              </Txt>
+              <Txt variant="caption" faint={0.5} numberOfLines={1}>
+                {t('Total saved')} {formatMoney(data.savings.total_saved, 'signed')}
+              </Txt>
+              {plannedSavings ? <ProgressBar percent={data.savings.percent} color={theme.accent} height={6} /> : null}
+            </Card>
+          </Pressable>
+        );
+      case 'income':
+        return (
+          <Pressable key="income" accessibilityRole="button" style={styles.halfPress} onPress={() => router.push('/income')}>
+            <Card style={styles.halfCard}>
+              <View style={styles.rowBetween}>
+                <Txt variant="label" faint={0.6}>
+                  {t('Income')}
+                </Txt>
+                <ChevronRight size={16} color={theme.faint(0.3)} />
+              </View>
+              <Txt variant="xl" numberOfLines={1} adjustsFontSizeToFit>
+                {formatMoney(data.income.total)}
+              </Txt>
+              {topSource ? (
+                <Txt variant="caption" faint={0.5} numberOfLines={1}>
+                  {t('Top source')} {topSource.source}
+                </Txt>
+              ) : null}
+              {topSource && incomeTotal > 0 ? (
+                <ProgressBar percent={(amountNumber(topSource.total) / incomeTotal) * 100} color={theme.accent} height={6} />
+              ) : null}
+            </Card>
+          </Pressable>
+        );
+    }
+  };
+
   return (
     <>
       <Card style={styles.section}>
@@ -161,66 +248,22 @@ function DashboardBody({ data, month, onOpenExpense }: { data: Dashboard; month:
         )}
       </Card>
 
-      <View style={styles.pair}>
-        <Card style={styles.half}>
-          <Txt variant="label" faint={0.6}>
-            {t('Today')}
-          </Txt>
-          <Txt variant="xl" numberOfLines={1} adjustsFontSizeToFit>
-            {formatMoney(data.today.total)}
-          </Txt>
-        </Card>
-        <Card style={styles.half}>
-          <Txt variant="label" faint={0.6}>
-            {t('Balance')}
-          </Txt>
-          <Txt variant="xl" color={negativeBalance ? theme.errorInk : theme.text} numberOfLines={1} adjustsFontSizeToFit>
-            {formatMoney(data.balance, 'signed')}
-          </Txt>
-          <Txt variant="caption" faint={0.5}>
-            {t('Income')} {formatMoney(data.income.total)}
-          </Txt>
-        </Card>
-      </View>
+      {cardPairs.map((pair, idx) => (
+        <View key={idx} style={styles.pair}>
+          {pair.map((cardId) => renderSummaryCard(cardId))}
+        </View>
+      ))}
 
-      <View style={styles.pair}>
-        <Pressable accessibilityRole="button" style={styles.halfPress} onPress={() => router.push('/savings')}>
-          <Card style={styles.halfCard}>
-            <View style={styles.rowBetween}>
-              <Txt variant="label" faint={0.6}>
-                {t('Savings')}
-              </Txt>
-              <ChevronRight size={16} color={theme.faint(0.3)} />
-            </View>
-            <Txt variant="xl" numberOfLines={1} adjustsFontSizeToFit>
-              {formatMoney(data.savings.saved_this_month)}
-            </Txt>
-            <Txt variant="caption" faint={0.5} numberOfLines={1}>
-              {t('Total saved')} {formatMoney(data.savings.total_saved, 'signed')}
-            </Txt>
-            {plannedSavings ? <ProgressBar percent={data.savings.percent} color={theme.accent} height={6} /> : null}
-          </Card>
-        </Pressable>
-        <Pressable accessibilityRole="button" style={styles.halfPress} onPress={() => router.push('/income')}>
-          <Card style={styles.halfCard}>
-            <View style={styles.rowBetween}>
-              <Txt variant="label" faint={0.6}>
-                {t('Income')}
-              </Txt>
-              <ChevronRight size={16} color={theme.faint(0.3)} />
-            </View>
-            <Txt variant="xl" numberOfLines={1} adjustsFontSizeToFit>
-              {formatMoney(data.income.total)}
-            </Txt>
-            {topSource ? (
-              <Txt variant="caption" faint={0.5} numberOfLines={1}>
-                {t('Top source')} {topSource.source}
-              </Txt>
-            ) : null}
-            {topSource && incomeTotal > 0 ? <ProgressBar percent={(amountNumber(topSource.total) / incomeTotal) * 100} color={theme.accent} height={6} /> : null}
-          </Card>
-        </Pressable>
-      </View>
+      <SummaryControlCard
+        data={data}
+        negativeBalance={negativeBalance}
+        plannedSavings={plannedSavings}
+        topSource={topSource}
+        incomeTotal={incomeTotal}
+        onOpenManage={manageCardsSheet.present}
+      />
+
+      <ManageCardsSheet sheetRef={manageCardsSheet.ref} />
 
       <Card style={styles.section}>
         <Txt variant="heading">{t('By category')}</Txt>
