@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { ArrowDownToLine, ArrowUpFromLine, PiggyBank } from 'lucide-react-native';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Card } from '@/components/Card';
 import { Fab } from '@/components/Fab';
@@ -27,6 +27,9 @@ import { amountNumber, formatMoney } from '@/utils/money';
 export default function SavingsScreen() {
   const t = useT();
   const theme = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
+  // Most of the screen, leaving a sliver of the next card in view.
+  const cardWidth = Math.round((screenWidth - layout.pageInset * 2) * 0.82);
   const router = useRouter();
   const locale = useLocaleStore((state) => state.locale);
   const [month, setMonth] = useState(currentYm());
@@ -71,52 +74,60 @@ export default function SavingsScreen() {
             <ErrorState error={summary.error} onRetry={refresh} compact />
           </Card>
         ) : data ? (
-          <>
-            <Card style={styles.section}>
-              <View style={styles.rowBetween}>
-                <Txt variant="label" faint={0.6}>
-                  {thisMonth ? t('Saved this month') : t('Saved in :month', { month: named })}
-                </Txt>
-                <PillButton label={planned > 0 ? t('Change plan') : t('Set a plan')} variant="tonal" size="sm" onPress={openPlan} />
-              </View>
-              <Txt variant="display">
-                {formatMoney(data.saved_this_month)}
-                {planned > 0 ? (
-                  <Txt variant="heading" faint={0.5}>
-                    {' '}
-                    {t('of')} {formatMoney(data.planned)}
+          // One row the width of the page, so the second card peeks in from
+          // the edge and says the row scrolls; each swipe lands on a card.
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            snapToInterval={cardWidth + SUMMARY_GAP}
+            decelerationRate="fast"
+            style={styles.summaryRow}
+            contentContainerStyle={styles.summaryContent}>
+                <Card style={[styles.section, styles.summaryCard, { width: cardWidth }]}>
+                  <View style={styles.rowBetween}>
+                    <Txt variant="label" faint={0.6}>
+                      {thisMonth ? t('Saved this month') : t('Saved in :month', { month: named })}
+                    </Txt>
+                    <PillButton label={planned > 0 ? t('Change plan') : t('Set a plan')} variant="tonal" size="sm" onPress={openPlan} />
+                  </View>
+                  <Txt variant="display">
+                    {formatMoney(data.saved_this_month)}
+                    {planned > 0 ? (
+                      <Txt variant="heading" faint={0.5}>
+                        {' '}
+                        {t('of')} {formatMoney(data.planned)}
+                      </Txt>
+                    ) : null}
                   </Txt>
-                ) : null}
-              </Txt>
-              {planned > 0 ? (
-                <>
-                  <ProgressBar percent={data.percent} color={data.status === 'met' ? theme.accent : data.status === 'close' ? '#F59E0B' : theme.accent} />
+                  {planned > 0 ? (
+                    <>
+                      <ProgressBar percent={data.percent} color={data.status === 'met' ? theme.accent : data.status === 'close' ? '#F59E0B' : theme.accent} />
+                      <Txt variant="label" faint={0.6}>
+                        {statusLine(data.status, data.remaining)} · {data.percent_raw}%
+                      </Txt>
+                    </>
+                  ) : (
+                    <Txt variant="label" faint={0.55}>
+                      {thisMonth ? t('No plan for this month yet.') : t('No plan for :month yet.', { month: named })}
+                    </Txt>
+                  )}
+                </Card>
+                <Card style={[styles.section, styles.summaryCard, { width: cardWidth }]}>
                   <Txt variant="label" faint={0.6}>
-                    {statusLine(data.status, data.remaining)} · {data.percent_raw}%
+                    {t('Total saved')}
                   </Txt>
-                </>
-              ) : (
-                <Txt variant="label" faint={0.55}>
-                  {thisMonth ? t('No plan for this month yet.') : t('No plan for :month yet.', { month: named })}
-                </Txt>
-              )}
-            </Card>
-            <Card style={styles.section}>
-              <Txt variant="label" faint={0.6}>
-                {t('Total saved')}
-              </Txt>
-              <Txt variant="xl">{formatMoney(data.total_saved, 'signed')}</Txt>
-              <Txt variant="label" faint={0.5}>
-                {thisMonth
-                  ? data.entries_count === 1
-                    ? t('1 entry this month')
-                    : t(':count entries this month', { count: data.entries_count })
-                  : data.entries_count === 1
-                    ? t('1 entry in :month', { month: named })
-                    : t(':count entries in :month', { count: data.entries_count, month: named })}
-              </Txt>
-            </Card>
-          </>
+                  <Txt variant="xl">{formatMoney(data.total_saved, 'signed')}</Txt>
+                  <Txt variant="label" faint={0.5}>
+                    {thisMonth
+                      ? data.entries_count === 1
+                        ? t('1 entry this month')
+                        : t(':count entries this month', { count: data.entries_count })
+                      : data.entries_count === 1
+                        ? t('1 entry in :month', { month: named })
+                        : t(':count entries in :month', { count: data.entries_count, month: named })}
+                  </Txt>
+                </Card>
+          </ScrollView>
         ) : null}
 
         {entries.isPending ? (
@@ -152,9 +163,16 @@ export default function SavingsScreen() {
   );
 }
 
+const SUMMARY_GAP = 12;
+
 const styles = StyleSheet.create({
   content: { gap: 14, paddingTop: 4 },
   section: { gap: 10 },
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   card: { paddingHorizontal: 14 },
+  // Out to the screen edges, then padded back in: the cards scroll to the
+  // edge rather than being clipped at the page inset.
+  summaryRow: { marginHorizontal: -layout.pageInset },
+  summaryContent: { paddingHorizontal: layout.pageInset, gap: SUMMARY_GAP },
+  summaryCard: { justifyContent: 'space-between' },
 });
