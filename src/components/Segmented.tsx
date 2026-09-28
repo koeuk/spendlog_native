@@ -19,12 +19,16 @@ interface SegmentedProps<T extends string> {
 
 const PADDING = 4;
 const SPRING = { damping: 18, stiffness: 180, mass: 0.8 };
+/** Snappier on the way in, so a tap's pop lands before the finger lifts. */
+const PRESS_SPRING = { damping: 14, stiffness: 320, mass: 0.6 };
 const GLASS = Platform.OS === 'ios' && isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
 
 /**
  * The tab bar in miniature: a frosted track with a glass lens under the chosen
  * option. Tap an option, or grab the lens and drag it; it swells on the way,
- * magnifies what it passes, and settles on the option it is let go on.
+ * magnifies what it passes, and settles on the option it is let go on. Like
+ * the tab bar, the track swells under a finger or a pointer and the option
+ * pressed pops.
  */
 export function Segmented<T extends string>({ options, value, onChange }: SegmentedProps<T>) {
   const theme = useTheme();
@@ -38,6 +42,9 @@ export function Segmented<T extends string>({ options, value, onChange }: Segmen
   const lift = useSharedValue(0);
   const origin = useSharedValue(0);
   const dragging = useSharedValue(false);
+  /** A finger on the track (0–1), and a pointer over it on the web or an iPad. */
+  const touch = useSharedValue(0);
+  const hover = useSharedValue(0);
   useEffect(() => {
     x.set(withSpring(index * slotWidth, SPRING));
   }, [index, slotWidth, x]);
@@ -68,6 +75,10 @@ export function Segmented<T extends string>({ options, value, onChange }: Segmen
     .activeOffsetX([-6, 6])
     // A vertical swipe belongs to whatever scrolls around the control.
     .failOffsetY([-10, 10])
+    // Touch-down, before a drag is recognised: a tap swells the track too.
+    .onBegin(() => {
+      touch.set(withSpring(1, SPRING));
+    })
     .onStart(() => {
       dragging.set(true);
       origin.set(x.get());
@@ -81,6 +92,7 @@ export function Segmented<T extends string>({ options, value, onChange }: Segmen
       if (after !== before) scheduleOnRN(setHovered, after);
     })
     .onFinalize(() => {
+      touch.set(withSpring(0, SPRING));
       // A tap never starts the pan; its Pressable handles it.
       if (!dragging.get()) return;
       dragging.set(false);
@@ -88,55 +100,71 @@ export function Segmented<T extends string>({ options, value, onChange }: Segmen
       dropped.set(Math.round(x.get() / slotWidth));
     });
 
-  const lens = useAnimatedStyle(() => ({
-    transform: [{ translateX: x.get() }, { scaleX: 1 + lift.get() * 0.1 }, { scaleY: 1 + lift.get() * 0.2 }],
+  const pointer = Gesture.Hover()
+    .onBegin(() => {
+      hover.set(withSpring(1, SPRING));
+    })
+    .onFinalize(() => {
+      hover.set(withSpring(0, SPRING));
+    });
+  const gestures = Gesture.Simultaneous(drag, pointer);
+
+  // A wider control than the tab bar, so a smaller swell reads the same.
+  const zoom = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + Math.max(touch.get(), hover.get() * 0.5) * 0.03 }],
   }));
+  const lens = useAnimatedStyle(() => {
+    const swell = Math.max(lift.get(), touch.get() * 0.4);
+    return { transform: [{ translateX: x.get() }, { scaleX: 1 + swell * 0.1 }, { scaleY: 1 + swell * 0.2 }] };
+  });
 
   const Track = GLASS ? GlassView : View;
   const scheme = theme.isDark ? ('dark' as const) : ('light' as const);
   const lit = hovered ?? index;
 
   return (
-    <GestureDetector gesture={drag}>
-      <Track
-        {...(GLASS ? { glassEffectStyle: 'regular' as const, colorScheme: scheme } : {})}
-        onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
-        style={[
-          styles.track,
-          !GLASS && { backgroundColor: theme.faint(theme.isDark ? 0.08 : 0.05), borderColor: theme.faint(0.06) },
-          GLASS && styles.glass,
-        ]}>
-        {slotWidth > 0 && (
-          <Animated.View style={[styles.lens, { width: slotWidth }, lens]}>
-            {GLASS ? (
-              <GlassView glassEffectStyle="clear" isInteractive colorScheme={scheme} style={styles.lensFill} />
-            ) : (
-              <View
-                style={[
-                  styles.lensFill,
-                  styles.lensRim,
-                  {
-                    backgroundColor: theme.isDark ? rgba('#FFFFFF', 0.14) : rgba('#FFFFFF', 0.95),
-                    borderColor: theme.isDark ? rgba('#FFFFFF', 0.22) : rgba('#FFFFFF', 1),
-                  },
-                ]}
-              />
-            )}
-          </Animated.View>
-        )}
-        {options.map((option, slot) => (
-          <Option
-            key={option.value}
-            label={option.label}
-            active={lit === slot}
-            slot={slot}
-            slotWidth={slotWidth}
-            x={x}
-            lift={lift}
-            onPress={() => select(slot)}
-          />
-        ))}
-      </Track>
+    <GestureDetector gesture={gestures}>
+      <Animated.View style={zoom}>
+        <Track
+          {...(GLASS ? { glassEffectStyle: 'regular' as const, colorScheme: scheme } : {})}
+          onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
+          style={[
+            styles.track,
+            !GLASS && { backgroundColor: theme.faint(theme.isDark ? 0.08 : 0.05), borderColor: theme.faint(0.06) },
+            GLASS && styles.glass,
+          ]}>
+          {slotWidth > 0 && (
+            <Animated.View style={[styles.lens, { width: slotWidth }, lens]}>
+              {GLASS ? (
+                <GlassView glassEffectStyle="clear" isInteractive colorScheme={scheme} style={styles.lensFill} />
+              ) : (
+                <View
+                  style={[
+                    styles.lensFill,
+                    styles.lensRim,
+                    {
+                      backgroundColor: theme.isDark ? rgba('#FFFFFF', 0.14) : rgba('#FFFFFF', 0.95),
+                      borderColor: theme.isDark ? rgba('#FFFFFF', 0.22) : rgba('#FFFFFF', 1),
+                    },
+                  ]}
+                />
+              )}
+            </Animated.View>
+          )}
+          {options.map((option, slot) => (
+            <Option
+              key={option.value}
+              label={option.label}
+              active={lit === slot}
+              slot={slot}
+              slotWidth={slotWidth}
+              x={x}
+              lift={lift}
+              onPress={() => select(slot)}
+            />
+          ))}
+        </Track>
+      </Animated.View>
     </GestureDetector>
   );
 }
@@ -151,19 +179,25 @@ interface OptionProps {
   onPress: () => void;
 }
 
+/** One option: it pops while pressed, grows under a pointer, and swells under the dragged lens. */
 function Option({ label, active, slot, slotWidth, x, lift, onPress }: OptionProps) {
   const theme = useTheme();
+  const press = useSharedValue(0);
+  const hover = useSharedValue(0);
   const magnify = useAnimatedStyle(() => {
-    if (slotWidth === 0) return {};
-    const near = interpolate(Math.abs(x.get() - slot * slotWidth), [0, slotWidth], [1, 0], 'clamp');
-    return { transform: [{ scale: 1 + near * lift.get() * 0.12 }] };
+    const near = slotWidth === 0 ? 0 : interpolate(Math.abs(x.get() - slot * slotWidth), [0, slotWidth], [1, 0], 'clamp');
+    return { transform: [{ scale: 1 + near * lift.get() * 0.12 + press.get() * 0.16 + hover.get() * 0.06 }] };
   });
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
       onPress={onPress}
-      style={({ pressed }) => [styles.option, pressed && { opacity: 0.6 }]}>
+      onPressIn={() => press.set(withSpring(1, PRESS_SPRING))}
+      onPressOut={() => press.set(withSpring(0, SPRING))}
+      onHoverIn={() => hover.set(withSpring(1, SPRING))}
+      onHoverOut={() => hover.set(withSpring(0, SPRING))}
+      style={styles.option}>
       <Animated.View style={magnify}>
         <Txt variant="label" weight="semibold" color={active ? theme.accent : theme.faint(0.55)} numberOfLines={1}>
           {label}

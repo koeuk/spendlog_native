@@ -42,6 +42,8 @@ const MENU_SCREENS = ['savings', 'income', 'recurring', 'borrowings'];
 const SLOTS = DESTINATIONS.length + 1;
 const PADDING = 5;
 const SPRING = { damping: 28, stiffness: 180, mass: 0.8 };
+/** Snappier on the way in, so a tap's pop lands before the finger lifts. */
+const PRESS_SPRING = { damping: 14, stiffness: 320, mass: 0.6 };
 const GLASS = Platform.OS === 'ios' && isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
 
 /** How far the pill floats above the bottom edge. */
@@ -90,6 +92,10 @@ export function TabBar({ state, navigation, onMenu }: Props) {
   const lift = useSharedValue(0);
   const origin = useSharedValue(0);
   const dragging = useSharedValue(false);
+  /** A finger on the bar (0–1): the whole pill swells under it, as iOS's does. */
+  const touch = useSharedValue(0);
+  /** A pointer over the bar, on the web or an iPad: a gentler swell. */
+  const hover = useSharedValue(0);
   useEffect(() => {
     x.set(withSpring(activeSlot * slotWidth, SPRING));
   }, [activeSlot, slotWidth, x]);
@@ -131,6 +137,10 @@ export function TabBar({ state, navigation, onMenu }: Props) {
   const drag = Gesture.Pan()
     .enabled(slotWidth > 0)
     .activeOffsetX([-6, 6])
+    // Touch-down, before a drag is recognised: a tap swells the bar too.
+    .onBegin(() => {
+      touch.set(withSpring(1, SPRING));
+    })
     .onStart(() => {
       dragging.set(true);
       origin.set(x.get());
@@ -144,6 +154,7 @@ export function TabBar({ state, navigation, onMenu }: Props) {
       if (after !== before) scheduleOnRN(setHovered, after);
     })
     .onFinalize(() => {
+      touch.set(withSpring(0, SPRING));
       // A tap never starts the pan; its Pressable handles it.
       if (!dragging.get()) return;
       dragging.set(false);
@@ -151,9 +162,22 @@ export function TabBar({ state, navigation, onMenu }: Props) {
       dropped.set(Math.round(x.get() / slotWidth));
     });
 
-  const lens = useAnimatedStyle(() => ({
-    transform: [{ translateX: x.get() }, { scaleX: 1 + lift.get() * 0.16 }, { scaleY: 1 + lift.get() * 0.22 }],
+  const pointer = Gesture.Hover()
+    .onBegin(() => {
+      hover.set(withSpring(1, SPRING));
+    })
+    .onFinalize(() => {
+      hover.set(withSpring(0, SPRING));
+    });
+  const gestures = Gesture.Simultaneous(drag, pointer);
+
+  const zoom = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + Math.max(touch.get(), hover.get() * 0.5) * 0.05 }],
   }));
+  const lens = useAnimatedStyle(() => {
+    const swell = Math.max(lift.get(), touch.get() * 0.4);
+    return { transform: [{ translateX: x.get() }, { scaleX: 1 + swell * 0.16 }, { scaleY: 1 + swell * 0.22 }] };
+  });
 
   const Pane = GLASS ? GlassView : View;
   const scheme = theme.isDark ? ('dark' as const) : ('light' as const);
@@ -161,61 +185,63 @@ export function TabBar({ state, navigation, onMenu }: Props) {
 
   return (
     <View style={[styles.host, { bottom: barOffset(insets.bottom), pointerEvents: 'box-none' }]}>
-      <GestureDetector gesture={drag}>
-        <Pane
-          {...(GLASS ? { glassEffectStyle: 'regular' as const, colorScheme: scheme } : {})}
-          onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
-          style={[
-            styles.bar,
-            !GLASS && {
-              // No blur behind Android views, so the pane stays nearly opaque there.
-              backgroundColor: rgba(theme.surface, Platform.OS === 'android' ? 0.96 : theme.isDark ? 0.82 : 0.78),
-              borderColor: theme.isDark ? rgba('#FFFFFF', 0.1) : rgba('#FFFFFF', 0.9),
-            },
-            GLASS && styles.glass,
-          ]}>
-          {slotWidth > 0 && (
-            <Animated.View style={[styles.lens, { width: slotWidth }, lens]}>
-              {GLASS ? (
-                <GlassView glassEffectStyle="clear" isInteractive colorScheme={scheme} style={styles.lensFill} />
-              ) : (
-                <View
-                  style={[
-                    styles.lensFill,
-                    styles.lensRim,
-                    {
-                      backgroundColor: theme.isDark ? rgba('#FFFFFF', 0.12) : rgba('#FFFFFF', 0.85),
-                      borderColor: theme.isDark ? rgba('#FFFFFF', 0.22) : rgba('#FFFFFF', 1),
-                    },
-                  ]}
-                />
-              )}
-            </Animated.View>
-          )}
-          {DESTINATIONS.map((destination, slot) => (
+      <GestureDetector gesture={gestures}>
+        <Animated.View style={zoom}>
+          <Pane
+            {...(GLASS ? { glassEffectStyle: 'regular' as const, colorScheme: scheme } : {})}
+            onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
+            style={[
+              styles.bar,
+              !GLASS && {
+                // No blur behind Android views, so the pane stays nearly opaque there.
+                backgroundColor: rgba(theme.surface, Platform.OS === 'android' ? 0.96 : theme.isDark ? 0.82 : 0.78),
+                borderColor: theme.isDark ? rgba('#FFFFFF', 0.1) : rgba('#FFFFFF', 0.9),
+              },
+              GLASS && styles.glass,
+            ]}>
+            {slotWidth > 0 && (
+              <Animated.View style={[styles.lens, { width: slotWidth }, lens]}>
+                {GLASS ? (
+                  <GlassView glassEffectStyle="clear" isInteractive colorScheme={scheme} style={styles.lensFill} />
+                ) : (
+                  <View
+                    style={[
+                      styles.lensFill,
+                      styles.lensRim,
+                      {
+                        backgroundColor: theme.isDark ? rgba('#FFFFFF', 0.12) : rgba('#FFFFFF', 0.85),
+                        borderColor: theme.isDark ? rgba('#FFFFFF', 0.22) : rgba('#FFFFFF', 1),
+                      },
+                    ]}
+                  />
+                )}
+              </Animated.View>
+            )}
+            {DESTINATIONS.map((destination, slot) => (
+              <TabItem
+                key={destination.name}
+                destination={destination}
+                label={t(destination.label)}
+                active={lit === slot}
+                slot={slot}
+                slotWidth={slotWidth}
+                x={x}
+                lift={lift}
+                onPress={() => select(slot)}
+              />
+            ))}
             <TabItem
-              key={destination.name}
-              destination={destination}
-              label={t(destination.label)}
-              active={lit === slot}
-              slot={slot}
+              destination={{ name: MENU_ROUTE, label: 'Menu', icon: Menu }}
+              label={t('Menu')}
+              active={lit === SLOTS - 1}
+              slot={SLOTS - 1}
               slotWidth={slotWidth}
               x={x}
               lift={lift}
-              onPress={() => select(slot)}
+              onPress={() => select(SLOTS - 1)}
             />
-          ))}
-          <TabItem
-            destination={{ name: MENU_ROUTE, label: 'Menu', icon: Menu }}
-            label={t('Menu')}
-            active={lit === SLOTS - 1}
-            slot={SLOTS - 1}
-            slotWidth={slotWidth}
-            x={x}
-            lift={lift}
-            onPress={() => select(SLOTS - 1)}
-          />
-        </Pane>
+          </Pane>
+        </Animated.View>
       </GestureDetector>
     </View>
   );
@@ -232,15 +258,19 @@ interface TabItemProps {
   onPress: () => void;
 }
 
-/** One tab; it swells as the dragged lens passes over it, like looking through glass. */
+/**
+ * One tab. It pops while pressed and grows under a pointer, and swells as the
+ * dragged lens passes over it, like looking through glass.
+ */
 function TabItem({ destination, label, active, slot, slotWidth, x, lift, onPress }: TabItemProps) {
   const theme = useTheme();
   const color = active ? theme.accent : theme.faint(0.55);
   const Icon = destination.icon;
+  const press = useSharedValue(0);
+  const hover = useSharedValue(0);
   const magnify = useAnimatedStyle(() => {
-    if (slotWidth === 0) return {};
-    const near = interpolate(Math.abs(x.get() - slot * slotWidth), [0, slotWidth], [1, 0], 'clamp');
-    return { transform: [{ scale: 1 + near * lift.get() * 0.14 }] };
+    const near = slotWidth === 0 ? 0 : interpolate(Math.abs(x.get() - slot * slotWidth), [0, slotWidth], [1, 0], 'clamp');
+    return { transform: [{ scale: 1 + near * lift.get() * 0.14 + press.get() * 0.18 + hover.get() * 0.08 }] };
   });
   return (
     <Pressable
@@ -248,7 +278,11 @@ function TabItem({ destination, label, active, slot, slotWidth, x, lift, onPress
       accessibilityState={{ selected: active }}
       accessibilityLabel={label}
       onPress={onPress}
-      style={({ pressed }) => [styles.item, pressed && { opacity: 0.6 }]}>
+      onPressIn={() => press.set(withSpring(1, PRESS_SPRING))}
+      onPressOut={() => press.set(withSpring(0, SPRING))}
+      onHoverIn={() => hover.set(withSpring(1, SPRING))}
+      onHoverOut={() => hover.set(withSpring(0, SPRING))}
+      style={styles.item}>
       <Animated.View style={[styles.itemInner, magnify]}>
         <Icon size={22} color={color} strokeWidth={active ? 2.4 : 2} />
         <Txt variant="caption" weight={active ? 'semibold' : 'medium'} color={color} numberOfLines={1}>
