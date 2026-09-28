@@ -9,6 +9,17 @@ export function useRecurringRules(kind?: RecurringKind) {
   return useQuery({ queryKey: keys.recurring(kind), queryFn: () => listRecurring(kind) });
 }
 
+/**
+ * One rule for its edit page. The API lists rules rather than serving one, so
+ * it is read out of the unfiltered list: already cached when the page is opened
+ * from an unfiltered list, and fetched when it is opened cold or from a filter.
+ */
+export function useRecurringRule(uuid: string) {
+  const list = useRecurringRules();
+  const rule = list.data?.find((candidate) => candidate.uuid === uuid) ?? null;
+  return { rule, isPending: list.isPending, error: list.error, refetch: list.refetch };
+}
+
 /** The `201` already contains the rows the rule wrote, so expenses and incomes refetch too. */
 export function useSaveRecurring() {
   return useMutation({

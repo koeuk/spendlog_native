@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { Banknote, Repeat } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -10,12 +11,11 @@ import { IconDisc } from '@/components/IconDisc';
 import { ListRow } from '@/components/ListRow';
 import { Screen } from '@/components/Screen';
 import { Segmented } from '@/components/Segmented';
-import { useSheet } from '@/components/Sheet';
 import { EmptyState, ErrorState, SkeletonCard } from '@/components/States';
 import { Txt } from '@/components/Txt';
+import { FREQUENCIES } from '@/forms/RecurringForm';
 import { useRecurringRules } from '@/hooks/recurring';
 import { useT } from '@/i18n';
-import { FREQUENCIES, RecurringFormSheet } from '@/sheets/RecurringFormSheet';
 import { useLocaleStore } from '@/store/locale';
 import { layout } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -29,16 +29,15 @@ type KindFilter = 'all' | RecurringKind;
 export default function RecurringScreen() {
   const t = useT();
   const theme = useTheme();
+  const router = useRouter();
   const locale = useLocaleStore((state) => state.locale);
   const [kind, setKind] = useState<KindFilter>('all');
   const rules = useRecurringRules(kind === 'all' ? undefined : kind);
-  const sheet = useSheet();
-  const [editing, setEditing] = useState<RecurringRule | null>(null);
 
-  const open = (rule: RecurringRule | null) => {
-    setEditing(rule);
-    sheet.present();
-  };
+  // A new rule starts on whatever the list is filtered to, so the form opens
+  // matching what was on screen.
+  const open = (rule: RecurringRule | null) =>
+    router.push(rule ? { pathname: '/recurring-form', params: { uuid: rule.uuid } } : { pathname: '/recurring-form', params: { kind: kind === 'income' ? 'income' : 'expense' } });
 
   const frequencyLabel = (rule: RecurringRule) => t(FREQUENCIES.find((option) => option.value === rule.frequency)?.label ?? rule.frequency);
 
@@ -94,7 +93,6 @@ export default function RecurringScreen() {
         ) : null}
       </Screen>
       <Fab onPress={() => open(null)} accessibilityLabel={t('Add recurring')} />
-      <RecurringFormSheet sheetRef={sheet.ref} rule={editing} defaultKind={kind === 'income' ? 'income' : 'expense'} />
     </>
   );
 }
