@@ -21,7 +21,7 @@ import { queryClient } from '@/api/queryClient';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { ToastHost } from '@/components/ToastHost';
 import { brandingQueryKey } from '@/hooks/useBranding';
-import { useSessionStore } from '@/store/session';
+import { needsEmailVerification, useSessionStore } from '@/store/session';
 import { useTheme } from '@/theme/useTheme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -79,15 +79,19 @@ export default function RootLayout() {
 function ThemedRoot() {
   const theme = useTheme();
   const signedIn = useSessionStore((state) => state.status === 'signed-in');
+  const unverified = useSessionStore((state) => needsEmailVerification(state.user));
 
   return (
     <View style={[styles.root, { backgroundColor: theme.ground }]}>
       <StatusBar style={theme.isDark ? 'light' : 'dark'} />
       <OfflineBanner />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.ground } }}>
-        <Stack.Protected guard={signedIn}>
+        <Stack.Protected guard={signedIn && !unverified}>
           <Stack.Screen name="(app)" />
           <Stack.Screen name="(forms)" />
+        </Stack.Protected>
+        <Stack.Protected guard={signedIn && unverified}>
+          <Stack.Screen name="verify-email" />
         </Stack.Protected>
         <Stack.Protected guard={!signedIn}>
           <Stack.Screen name="(auth)" />

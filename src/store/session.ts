@@ -36,6 +36,15 @@ function cacheUser(user: User | null): void {
   write.catch(() => {});
 }
 
+/**
+ * A signed-in account whose email is not confirmed yet sees only the
+ * verify-email screen. Only an explicit `null` counts: a user cached without
+ * the field is let through rather than locked out.
+ */
+export function needsEmailVerification(user: User | null): boolean {
+  return user !== null && user.email_verified_at === null;
+}
+
 export const useSessionStore = create<SessionState>()((set, get) => ({
   status: 'restoring',
   user: null,

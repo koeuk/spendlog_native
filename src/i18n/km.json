@@ -742,5 +742,16 @@
   "See where your money goes": "មើលថាលុយរបស់អ្នកទៅណា",
   "Weekly, monthly and yearly reports, ready to export.": "របាយការណ៍ប្រចាំសប្តាហ៍ ប្រចាំខែ និងប្រចាំឆ្នាំ រួចរាល់សម្រាប់នាំចេញ។",
   "All your money in one place": "លុយទាំងអស់របស់អ្នកនៅកន្លែងតែមួយ",
-  "Savings, income and borrowing sit beside your spending.": "ការសន្សំ ចំណូល និងការខ្ចីប្រាក់ នៅក្បែរការចំណាយរបស់អ្នក។"
+  "Savings, income and borrowing sit beside your spending.": "ការសន្សំ ចំណូល និងការខ្ចីប្រាក់ នៅក្បែរការចំណាយរបស់អ្នក។",
+  "Verify your email": "ផ្ទៀងផ្ទាត់អ៊ីមែលរបស់អ្នក",
+  "We sent a six-digit code to :email.": "យើងបានផ្ញើកូដ ៦ ខ្ទង់ទៅ :email។",
+  "The code lasts ten minutes.": "កូដមានសុពលភាពដប់នាទី។",
+  "Verify": "ផ្ទៀងផ្ទាត់",
+  "Resend code": "ផ្ញើកូដម្តងទៀត",
+  "Resend code in :seconds s": "ផ្ញើកូដម្តងទៀតក្នុង :seconds វិនាទី",
+  "Your email is verified.": "អ៊ីមែលរបស់អ្នកត្រូវបានផ្ទៀងផ្ទាត់។",
+  "Your email is already verified.": "អ៊ីមែលរបស់អ្នកបានផ្ទៀងផ្ទាត់រួចហើយ។",
+  "We emailed you a new 6-digit code.": "យើងបានផ្ញើកូដ ៦ ខ្ទង់ថ្មីទៅអ៊ីមែលរបស់អ្នក។",
+  "That code is not valid. It may have expired — you can request a new one.": "កូដនោះមិនត្រឹមត្រូវទេ។ វាប្រហែលជាផុតកំណត់ហើយ — អ្នកអាចស្នើសុំកូដថ្មី។",
+  "Please wait before retrying.": "សូមរង់ចាំបន្តិចមុនព្យាយាមម្តងទៀត។"
 }

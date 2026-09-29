@@ -38,6 +38,23 @@ export async function logout(): Promise<void> {
   await api.post('/logout');
 }
 
+export interface VerifyEmailResponse {
+  message: string;
+  user: User;
+}
+
+/** Confirms the account's email with the six-digit code the server mailed. */
+export async function verifyEmail(code: string): Promise<VerifyEmailResponse> {
+  const { data } = await api.post<VerifyEmailResponse>('/email/verify', { code });
+  return data;
+}
+
+/** Mails a fresh code; the server refuses a second one within 60 seconds. */
+export async function resendVerificationCode(): Promise<{ message: string }> {
+  const { data } = await api.post<{ message: string }>('/email/verification-notification');
+  return data;
+}
+
 export async function forgotPassword(email: string): Promise<void> {
   await api.post('/forgot-password', { email });
 }
