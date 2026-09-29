@@ -27,7 +27,9 @@ export function Glass({ children, style, tint, interactive = false, fill = false
   const theme = useTheme();
   const placement = fill ? [StyleSheet.absoluteFill, { pointerEvents: 'none' as const }] : null;
 
-  if (LIQUID_GLASS) {
+  // The system's glass refracts what is behind it, so on a plain page it has
+  // nothing to work with: fall back to the solid pane there too.
+  if (LIQUID_GLASS && !theme.plain) {
     return (
       <GlassView glassEffectStyle="regular" tintColor={tint} isInteractive={interactive} colorScheme={theme.isDark ? 'dark' : 'light'} style={[placement, style]}>
         {children}
