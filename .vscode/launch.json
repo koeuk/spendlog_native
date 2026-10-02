@@ -4,7 +4,39 @@
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
-    
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Run metro",
+      "runtimeExecutable": "metro",
+      "cwd": "${workspaceFolder}",
+      "args": []
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Run semver",
+      "runtimeExecutable": "semver",
+      "cwd": "${workspaceFolder}/node_modules/@expo/config-plugins",
+      "args": []
+    },
+    {
+      "name": "Run iOS Hermes",
+      "request": "launch",
+      "type": "reactnativedirect",
+      "cwd": "${workspaceFolder}",
+      "enableDebug": false,
+      "platform": "ios"
+    },
+    {
+      "name": "Run iOS Hermes",
+      "request": "launch",
+      "type": "reactnativedirect",
+      "cwd": "${workspaceFolder}",
+      "enableDebug": false,
+      "platform": "ios"
+    },
+
     {
       "name": "Run Android Hermes",
       "request": "launch",

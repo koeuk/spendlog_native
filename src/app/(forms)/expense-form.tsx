@@ -27,7 +27,7 @@ export default function ExpenseFormScreen() {
 
   return (
     <ExpenseForm
-      key={uuid || "new"}
+      key={uuid || "new"} 
       title={title}
       expense={query.data ?? null}
       onDone={leave}
