@@ -10,6 +10,7 @@ import {
   useDashboardCardsStore,
   type SummaryCardId,
 } from "@/store/dashboardCards";
+import { radius } from "@/theme/tokens";
 import { useTheme } from "@/theme/useTheme";
 import type { Dashboard, Money } from "@/types/api";
 import { amountNumber, formatMoney } from "@/utils/money";
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
   tile: {
     flex: 1,
     padding: 12,
-    borderRadius: 14,
+    borderRadius: radius.card,
     borderWidth: StyleSheet.hairlineWidth,
     gap: 4,
     justifyContent: "center",

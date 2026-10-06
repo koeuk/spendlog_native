@@ -75,8 +75,8 @@ const styles = StyleSheet.create({
   list: { paddingHorizontal: layout.pageInset, paddingBottom: layout.fabClearance },
   topSpace: { height: 4 },
   rowCard: { paddingHorizontal: 14, borderRadius: 0 },
-  firstRow: { borderTopLeftRadius: 24, borderTopRightRadius: 24 },
-  lastRow: { borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
+  firstRow: { borderTopLeftRadius: radius.card, borderTopRightRadius: radius.card },
+  lastRow: { borderBottomLeftRadius: radius.card, borderBottomRightRadius: radius.card },
   status: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.chip },
   footer: { paddingVertical: 16 },
 });

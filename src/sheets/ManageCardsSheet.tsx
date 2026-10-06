@@ -7,7 +7,7 @@ import { Sheet, type SheetRef } from '@/components/Sheet';
 import { Txt } from '@/components/Txt';
 import { useT } from '@/i18n';
 import { useDashboardCardsStore, type SummaryCardId } from '@/store/dashboardCards';
-import { layout } from '@/theme/tokens';
+import { layout, radius } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 interface CardMeta {
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   cardList: {
-    borderRadius: 16,
+    borderRadius: radius.card,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },

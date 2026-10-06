@@ -22,9 +22,9 @@ export const palette = {
 } as const;
 
 export const radius = {
-  card: 24,
+  card: 10,
   pill: 28,
-  row: 18,
+  row: 10,
   sheet: 28,
   chip: 999,
 } as const;

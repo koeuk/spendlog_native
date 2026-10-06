@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useT } from '@/i18n';
 import { useLocaleStore } from '@/store/locale';
+import { radius } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import type { ActivityAction, ActivityEntry } from '@/types/api';
 import { dateTime } from '@/utils/dates';
@@ -81,8 +82,8 @@ export function ActivityRow({ entry, first, last, expanded = false, onToggle, on
 
 const styles = StyleSheet.create({
   rowCard: { paddingHorizontal: 14, borderRadius: 0 },
-  firstRow: { borderTopLeftRadius: 24, borderTopRightRadius: 24 },
-  lastRow: { borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
+  firstRow: { borderTopLeftRadius: radius.card, borderTopRightRadius: radius.card },
+  lastRow: { borderBottomLeftRadius: radius.card, borderBottomRightRadius: radius.card },
   row: { flexDirection: 'row', gap: 12, paddingVertical: 12, alignItems: 'flex-start' },
   body: { flex: 1, gap: 3 },
   changes: { marginTop: 6, gap: 2 },

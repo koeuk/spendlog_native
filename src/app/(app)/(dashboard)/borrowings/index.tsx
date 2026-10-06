@@ -15,7 +15,7 @@ import { Txt } from '@/components/Txt';
 import { useTabBarInset } from '@/components/TabBar';
 import { useBorrowingSummary, useBorrowings } from '@/hooks/borrowings';
 import { useT } from '@/i18n';
-import { layout } from '@/theme/tokens';
+import { layout, radius } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { formatMoney } from '@/utils/money';
 
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   typeRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 6 },
   grow: { flex: 1 },
   rowCard: { paddingHorizontal: 14, borderRadius: 0 },
-  firstRow: { borderTopLeftRadius: 24, borderTopRightRadius: 24 },
-  lastRow: { borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
+  firstRow: { borderTopLeftRadius: radius.card, borderTopRightRadius: radius.card },
+  lastRow: { borderBottomLeftRadius: radius.card, borderBottomRightRadius: radius.card },
   footer: { paddingVertical: 16 },
 });
