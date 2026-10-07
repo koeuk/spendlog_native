@@ -130,6 +130,7 @@ export function SummaryControlCard({
                   percent={data.savings.percent}
                   color={theme.accent}
                   height={6}
+                  border
                 />
               ) : null}
             </View>
@@ -168,6 +169,7 @@ export function SummaryControlCard({
                   percent={(amountNumber(topSource.total) / incomeTotal) * 100}
                   color={theme.accent}
                   height={6}
+                  border
                 />
               ) : null}
             </View>
@@ -177,7 +179,7 @@ export function SummaryControlCard({
   };
 
   return (
-    <Card style={styles.container}>
+    <Card style={[styles.container, { borderColor: theme.hairline }]}>
       <View style={styles.header}>
         <View style={styles.headerTitles}>
           <Txt variant="heading">{t("Card summary")}</Txt>
@@ -213,6 +215,7 @@ export function SummaryControlCard({
 const styles = StyleSheet.create({
   container: {
     gap: 14,
+    borderWidth: 1,
   },
   header: {
     flexDirection: "row",

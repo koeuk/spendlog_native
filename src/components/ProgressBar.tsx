@@ -7,13 +7,14 @@ interface ProgressBarProps {
   percent: number;
   color: string;
   height?: number;
+  border?: boolean;
 }
 
-export function ProgressBar({ percent, color, height = 8 }: ProgressBarProps) {
+export function ProgressBar({ percent, color, height = 8, border = false }: ProgressBarProps) {
   const theme = useTheme();
   const width = Math.max(0, Math.min(100, percent));
   return (
-    <View style={[styles.track, { height, borderRadius: height / 2, backgroundColor: theme.faint(0.08) }]}>
+    <View style={[styles.track, { height, borderRadius: height / 2, backgroundColor: theme.faint(0.08) }, border && { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.hairline }]}>
       <View style={[styles.fill, { width: `${width}%`, backgroundColor: color, borderRadius: height / 2 }]} />
     </View>
   );

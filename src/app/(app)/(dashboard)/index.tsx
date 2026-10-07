@@ -219,7 +219,7 @@ function DashboardBody({ data, month, onOpenExpense }: { data: Dashboard; month:
 
   return (
     <>
-      <Card style={styles.section}>
+      <Card style={[styles.section, styles.summaryCard, { borderColor: theme.hairline }]}>
         <Txt variant="label" faint={0.6}>
           {isCurrent ? t('This month') : monthLabel(month, locale)}
         </Txt>
@@ -233,7 +233,7 @@ function DashboardBody({ data, month, onOpenExpense }: { data: Dashboard; month:
           </View>
         ) : (
           <>
-            <ProgressBar percent={overall.bar_percent} color={statusColor(overall.status)} />
+            <ProgressBar percent={overall.bar_percent} color={statusColor(overall.status)} border />
             <View style={styles.budgetRow}>
               <Txt variant="label" color={overall.status === 'over' ? theme.errorInk : theme.faint(0.6)} style={styles.grow}>
                 {overall.status === 'over'
@@ -320,6 +320,7 @@ const styles = StyleSheet.create({
   greeting: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: layout.pageInset, paddingTop: 12, paddingBottom: 10 },
   greetingText: { flex: 1 },
   section: { gap: 12 },
+  summaryCard: { borderWidth: 1 },
   pair: { flexDirection: 'row', gap: 14 },
   half: { flex: 1, gap: 4 },
   // The pressable carries the width, the card fills it: both halves then end up
