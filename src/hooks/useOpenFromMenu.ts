@@ -10,10 +10,11 @@ export type MenuBranch = '(dashboard)' | '(profile)';
  * returns to the previous tab instead of another menu destination.
  */
 export function useOpenFromMenu() {
-  const navigation = useNavigation('/(app)');
+  const navigation = useNavigation('/');
   const router = useRouter();
   return (branch: MenuBranch, screen: string) => {
-    const branchState = navigation.getState()?.routes.find((route) => route.name === branch)?.state;
+    const tabsState = navigation.getState()?.routes.find((route) => route.name === '(app)')?.state;
+    const branchState = tabsState?.routes.find((route) => route.name === branch)?.state;
     if (branchState) {
       const routes = branch === '(dashboard)' ? [{ name: 'index' }, { name: screen }] : [{ name: screen }];
       // Apply this reset before the href navigation reads the branch's state.

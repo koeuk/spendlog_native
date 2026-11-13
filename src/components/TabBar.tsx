@@ -1,4 +1,5 @@
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
+import { usePathname } from 'expo-router';
 import type { Tabs } from 'expo-router/js-tabs';
 import { ChartNoAxesColumn, House, Menu, PiggyBank, ReceiptText, type LucideIcon } from 'lucide-react-native';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ComponentProps } from 'react';
@@ -117,13 +118,13 @@ interface Props extends TabBarProps {
  * - Press-and-drag via PanGesture with finger tracking and nearest-item snapping
  * - Haptic feedback when the pill lands on or crosses a new item
  */
-export function TabBar({ state, navigation, onMenu }: Props) {
+export function TabBar({ state, emitter, navigateToTab, onMenu }: Props) {
   const theme = useTheme();
   const t = useT();
   const insets = useSafeAreaInsets();
   const focused = state.routes[state.index];
-  const screen = focused?.state?.routes[focused.state.index ?? 0]?.name ?? '';
-  const onMenuScreen = MENU_SCREENS.some((name) => screen === name || screen.startsWith(`${name}/`));
+  const pathname = usePathname();
+  const onMenuScreen = MENU_SCREENS.some((name) => pathname === `/${name}` || pathname.startsWith(`/${name}/`));
   const activeName = onMenuScreen ? MENU_ROUTE : focused?.name;
   const activeSlot = activeName === MENU_ROUTE ? SLOTS - 1 : Math.max(0, DESTINATIONS.findIndex((d) => d.name === activeName));
 
@@ -209,26 +210,25 @@ export function TabBar({ state, navigation, onMenu }: Props) {
       }
 
       const destination = DESTINATIONS[slot];
-      if (!destination) {
+      const route = state.routes.find((candidate) => candidate.name === destination?.name);
+      if (!route) {
         animatePillToSlot(activeSlot);
         return;
       }
 
-      // Lazy tabs may not have a route instance until their first visit.
-      const route = state.routes.find((candidate) => candidate.name === destination.name);
-      const event = navigation.emit({ type: 'tabPress', target: route?.key, canPreventDefault: true });
+      const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
       if (event.defaultPrevented) {
         animatePillToSlot(activeSlot);
         return;
       }
 
-      if (!route || route.key !== focused?.key) {
-        navigation.navigate(destination.name, route?.params);
+      if (route.key !== focused?.key) {
+        navigateToTab(route.key);
       }
 
       animatePillToSlot(slot);
     },
-    [activeSlot, animatePillToSlot, focused?.key, navigation, onMenu, state.routes],
+    [activeSlot, animatePillToSlot, emitter, focused?.key, navigateToTab, onMenu, state.routes],
   );
 
   /** Reaction for drop landing from gesture worklet */
