@@ -1,23 +1,28 @@
-import { useNavigation } from 'expo-router';
+import { useNavigation, useRouter, type Href } from 'expo-router';
+import { CommonActions } from 'expo-router/react-navigation';
 
 /** The two tab branches whose screens the menu opens. */
 export type MenuBranch = '(dashboard)' | '(profile)';
 
-interface Navigator {
-  navigate: (name: string, params: object) => void;
-}
-
 /**
- * Opens a menu destination on a fresh stack. A plain push lands on top of
- * whatever that branch last showed, so Back from Settings could walk into
- * Users. Handing the branch a `state` resets it instead: a Home screen sits
- * over the dashboard, a Menu screen stands alone, and Back from it returns
- * to the tab the menu was opened from.
+ * Reset an existing branch before opening the complete href. Home destinations
+ * keep the dashboard underneath; profile destinations stand alone so Back
+ * returns to the previous tab instead of another menu destination.
  */
 export function useOpenFromMenu() {
-  const navigation = useNavigation() as unknown as Navigator;
+  const navigation = useNavigation('/(app)');
+  const router = useRouter();
   return (branch: MenuBranch, screen: string) => {
-    const routes = branch === '(dashboard)' ? [{ name: 'index' }, { name: screen }] : [{ name: screen }];
-    navigation.navigate('(app)', { screen: branch, params: { state: { index: routes.length - 1, routes } } });
+    const branchState = navigation.getState()?.routes.find((route) => route.name === branch)?.state;
+    if (branchState) {
+      const routes = branch === '(dashboard)' ? [{ name: 'index' }, { name: screen }] : [{ name: screen }];
+      // Apply this reset before the href navigation reads the branch's state.
+      navigation.dispatchSync({
+        ...CommonActions.reset({ ...branchState, index: routes.length - 1, routes }),
+        target: branchState.key,
+      });
+    }
+    const path = screen.replace(/\/index$/, '');
+    router.navigate(`/(app)/${branch}/${path}` as Href, { withAnchor: branch === '(dashboard)' });
   };
 }

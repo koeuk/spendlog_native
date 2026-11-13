@@ -1,4 +1,4 @@
-import { Tabs } from 'expo-router';
+import { Tabs } from 'expo-router/js-tabs';
 
 import { TabBar, TabBarInsetContext, useTabBarClearance } from '@/components/TabBar';
 import { useSheet } from '@/components/Sheet';
@@ -22,7 +22,6 @@ export default function AppLayout() {
   return (
     <TabBarInsetContext.Provider value={clearance}>
       <Tabs
-        initialRouteName="(dashboard)"
         // Back from a screen the menu opened returns to the tab it was opened from.
         backBehavior="history"
         screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: theme.ground }, lazy: true }}

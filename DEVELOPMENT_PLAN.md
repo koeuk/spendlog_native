@@ -13,7 +13,7 @@ system and Khmer dictionary are reused here, only the technology changes.
 
 | Concern | Choice | Why |
 |---|---|---|
-| Framework | **Expo SDK 57** (`create-expo-app` default template: Expo Router, React 19, RN 0.86, React Compiler on) + **TypeScript 6** | Runs in Expo Go on a phone with zero native setup. This machine has Node 22, an Android SDK and `adb`, but **no Java on PATH**, so native builds are a later step, not a day-one blocker. |
+| Framework | **Expo SDK 58** (Expo Router, React 19.3, RN 0.88, React Compiler on) + **TypeScript 6** | Runs in SDK 58-compatible Expo Go on a phone with zero native setup. Requires Node 22.13+ on the Node 22 release line or a supported newer even-numbered release. This machine has Node 22, an Android SDK and `adb`, but **no Java on PATH**, so native builds are a later step, not a day-one blocker. |
 | Navigation | **Expo Router** (file-based, `Tabs` with a nested `Stack` per tab) | Same shape as the Flutter `StatefulShellRoute`: five tabs, each keeping its own stack. |
 | HTTP | **axios** | Interceptors map 1:1 to the Flutter `ApiClient`: bearer header, `Accept-Language`, 401 → sign out. |
 | Server state | **@tanstack/react-query** | Query keys per resource; one mutation invalidates dashboard, expenses and budgets together, the way the Flutter providers do. |

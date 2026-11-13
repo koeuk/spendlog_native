@@ -1,10 +1,17 @@
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
-import type { Tabs } from 'expo-router';
+import type { Tabs } from 'expo-router/js-tabs';
 import { ChartNoAxesColumn, House, Menu, PiggyBank, ReceiptText, type LucideIcon } from 'lucide-react-native';
-import { createContext, useContext, useEffect, useState, type ComponentProps } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ComponentProps } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { interpolate, useAnimatedReaction, useAnimatedStyle, useSharedValue, withSpring, type SharedValue } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedReaction,
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -15,12 +22,44 @@ import { rgba } from '@/utils/color';
 
 import { Txt } from './Txt';
 
+// Optional expo-haptics integration with graceful runtime fallback
+interface HapticsModule {
+  selectionAsync?: () => Promise<void>;
+  impactAsync?: (style: unknown) => Promise<void>;
+  ImpactFeedbackStyle?: { Light: unknown; Medium: unknown; Heavy: unknown };
+}
+
+let Haptics: HapticsModule | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  Haptics = require('expo-haptics') as HapticsModule;
+} catch {
+  // Graceful fallback when expo-haptics is not available
+}
+
+function triggerHaptic() {
+  try {
+    if (Haptics?.selectionAsync) {
+      void Haptics.selectionAsync();
+    } else if (Haptics?.impactAsync && Haptics.ImpactFeedbackStyle?.Light) {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  } catch {
+    // Ignore on unsupported platforms (e.g. web)
+  }
+}
+
 type TabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
 
 interface Destination {
   name: string;
   label: string;
   icon: LucideIcon;
+}
+
+interface TabLayout {
+  x: number;
+  width: number;
 }
 
 const DESTINATIONS: Destination[] = [
@@ -41,9 +80,10 @@ const MENU_SCREENS = ['savings', 'income', 'recurring', 'borrowings'];
 
 const SLOTS = DESTINATIONS.length + 1;
 const PADDING = 5;
-const SPRING = { damping: 28, stiffness: 180, mass: 0.8 };
-/** Snappier on the way in, so a tap's pop lands before the finger lifts. */
-const PRESS_SPRING = { damping: 14, stiffness: 320, mass: 0.6 };
+
+/** Spring configuration: damping 18, stiffness 220 */
+const SPRING_CONFIG = { damping: 18, stiffness: 220 };
+
 const GLASS = Platform.OS === 'ios' && isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
 
 /** How far the pill floats above the bottom edge. */
@@ -69,10 +109,13 @@ interface Props extends TabBarProps {
 }
 
 /**
- * A frosted pill that floats over the content, four tabs and a Menu inside.
- * Liquid glass on iOS 26, a translucent pane everywhere else. A glass lens
- * sits under the active tab; grab it and drag along the bar and it swells,
- * magnifies whatever it passes over, then settles on the tab it is let go on.
+ * A floating liquid glass tab bar with a single sliding pill indicator.
+ *
+ * - Measures each tab item with onLayout
+ * - Animates the single pill indicator's translateX and width with spring physics
+ * - Slight horizontal stretch (scaleX up to 1.08) while moving, returning to 1
+ * - Press-and-drag via PanGesture with finger tracking and nearest-item snapping
+ * - Haptic feedback when the pill lands on or crosses a new item
  */
 export function TabBar({ state, navigation, onMenu }: Props) {
   const theme = useTheme();
@@ -84,45 +127,111 @@ export function TabBar({ state, navigation, onMenu }: Props) {
   const activeName = onMenuScreen ? MENU_ROUTE : focused?.name;
   const activeSlot = activeName === MENU_ROUTE ? SLOTS - 1 : Math.max(0, DESTINATIONS.findIndex((d) => d.name === activeName));
 
-  const [width, setWidth] = useState(0);
-  const slotWidth = width > 0 ? (width - PADDING * 2) / SLOTS : 0;
-  /** The slot under the finger while dragging, so its label lights up before it is chosen. */
-  const [hovered, setHovered] = useState<number | null>(null);
-  const x = useSharedValue(0);
-  const lift = useSharedValue(0);
-  const origin = useSharedValue(0);
-  const dragging = useSharedValue(false);
-  /** A finger on the bar (0–1): the whole pill swells under it, as iOS's does. */
-  const touch = useSharedValue(0);
-  /** A pointer over the bar, on the web or an iPad: a gentler swell. */
-  const hover = useSharedValue(0);
-  useEffect(() => {
-    x.set(withSpring(activeSlot * slotWidth, SPRING));
-  }, [activeSlot, slotWidth, x]);
+  /** Stored measurements for each tab slot */
+  const layoutsRef = useRef<Record<number, TabLayout>>({});
+  const tabLayouts = useSharedValue<Record<number, TabLayout>>({});
+  const hasInitialized = useSharedValue(false);
 
-  /** Acts on a chosen slot, then parks the lens wherever the bar ends up lit. */
-  const select = (slot: number) => {
-    setHovered(null);
-    const settle = (at: number) => x.set(withSpring(at * slotWidth, SPRING));
-    if (slot === SLOTS - 1) {
-      // Menu opens a sheet rather than a tab, so the lens goes back home.
-      settle(activeSlot);
-      onMenu();
-      return;
-    }
-    const destination = DESTINATIONS[slot];
-    const route = state.routes.find((candidate) => candidate.name === destination?.name);
-    if (!route) return settle(activeSlot);
-    const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-    if (event.defaultPrevented) return settle(activeSlot);
-    // Re-pressing the focused tab is left to its stack, which pops back to its
-    // root on tabPress; that is how Home comes back from a Menu screen in its stack.
-    if (route.key !== focused?.key) navigation.navigate(route.name, route.params);
-    settle(slot);
-  };
-  // The drag ends on the UI thread and drops its slot here; the reaction is
-  // rebuilt with every render, so it always reaches this render's select.
+  /** Active slot under finger while dragging */
+  const [hovered, setHovered] = useState<number | null>(null);
+
+  /** Pill animation shared values */
+  const translateX = useSharedValue(0);
+  const pillWidth = useSharedValue(0);
+  const pillOpacity = useSharedValue(0);
+  const scaleX = useSharedValue(1);
+
+  /** Drag tracking shared values */
+  const dragStartX = useSharedValue(0);
+  const isDragging = useSharedValue(false);
+  const currentNearest = useSharedValue(activeSlot);
   const dropped = useSharedValue(-1);
+
+  /** Gentle swell when touching or hovering over the whole bar */
+  const touch = useSharedValue(0);
+  const hover = useSharedValue(0);
+
+  /**
+   * Handle layout measurement of an item.
+   * When the active item is measured for the first time, positions the pill immediately.
+   */
+  const handleItemLayout = useCallback(
+    (slot: number, x: number, width: number) => {
+      layoutsRef.current[slot] = { x, width };
+      tabLayouts.set({ ...layoutsRef.current });
+
+      if (slot === activeSlot && !hasInitialized.get()) {
+        translateX.set(x);
+        pillWidth.set(width);
+        pillOpacity.set(withTiming(1, { duration: 150 }));
+        hasInitialized.set(true);
+      }
+    },
+    [activeSlot, hasInitialized, pillOpacity, pillWidth, tabLayouts, translateX],
+  );
+
+  /** Animate the pill to a target slot with spring and slight stretch */
+  const animatePillToSlot = useCallback(
+    (slot: number) => {
+      const layoutData = layoutsRef.current[slot];
+      if (!layoutData) return;
+
+      // Slight stretch while moving: scaleX up to 1.08, then spring back to 1
+      scaleX.set(
+        withSequence(
+          withSpring(1.08, { damping: 12, stiffness: 280 }),
+          withSpring(1, SPRING_CONFIG),
+        ),
+      );
+
+      translateX.set(withSpring(layoutData.x, SPRING_CONFIG));
+      pillWidth.set(withSpring(layoutData.width, SPRING_CONFIG));
+    },
+    [pillWidth, scaleX, translateX],
+  );
+
+  /** Update pill position when activeSlot changes programmatically or via navigation */
+  useEffect(() => {
+    animatePillToSlot(activeSlot);
+  }, [activeSlot, animatePillToSlot]);
+
+  /** Select a tab slot and navigate or open menu */
+  const select = useCallback(
+    (slot: number) => {
+      setHovered(null);
+      triggerHaptic();
+
+      if (slot === SLOTS - 1) {
+        // Menu opens a sheet; pill returns to the active tab
+        animatePillToSlot(activeSlot);
+        onMenu();
+        return;
+      }
+
+      const destination = DESTINATIONS[slot];
+      if (!destination) {
+        animatePillToSlot(activeSlot);
+        return;
+      }
+
+      // Lazy tabs may not have a route instance until their first visit.
+      const route = state.routes.find((candidate) => candidate.name === destination.name);
+      const event = navigation.emit({ type: 'tabPress', target: route?.key, canPreventDefault: true });
+      if (event.defaultPrevented) {
+        animatePillToSlot(activeSlot);
+        return;
+      }
+
+      if (!route || route.key !== focused?.key) {
+        navigation.navigate(destination.name, route?.params);
+      }
+
+      animatePillToSlot(slot);
+    },
+    [activeSlot, animatePillToSlot, focused?.key, navigation, onMenu, state.routes],
+  );
+
+  /** Reaction for drop landing from gesture worklet */
   useAnimatedReaction(
     () => dropped.get(),
     (slot) => {
@@ -133,51 +242,99 @@ export function TabBar({ state, navigation, onMenu }: Props) {
     [select],
   );
 
-  const max = slotWidth * (SLOTS - 1);
-  const drag = Gesture.Pan()
-    .enabled(slotWidth > 0)
+  /** Pan gesture: move the pill with finger, detect nearest slot, snap on release */
+  const panGesture = Gesture.Pan()
     .activeOffsetX([-6, 6])
-    // Touch-down, before a drag is recognised: a tap swells the bar too.
     .onBegin(() => {
-      touch.set(withSpring(1, SPRING));
+      touch.set(withSpring(1, SPRING_CONFIG));
     })
     .onStart(() => {
-      dragging.set(true);
-      origin.set(x.get());
-      lift.set(withSpring(1, SPRING));
+      isDragging.set(true);
+      dragStartX.set(translateX.get());
+      scaleX.set(withSpring(1.08, { damping: 14, stiffness: 260 }));
     })
     .onUpdate((event) => {
-      const next = Math.min(max, Math.max(0, origin.get() + event.translationX));
-      const before = Math.round(x.get() / slotWidth);
-      x.set(next);
-      const after = Math.round(next / slotWidth);
-      if (after !== before) scheduleOnRN(setHovered, after);
+      const layouts = tabLayouts.get();
+      const keys = Object.keys(layouts).map(Number);
+      if (keys.length === 0) return;
+
+      const minX = layouts[0]?.x ?? 0;
+      const maxKey = Math.max(...keys);
+      const maxX = layouts[maxKey]?.x ?? 0;
+
+      // Follow finger with clamping
+      const nextX = Math.min(maxX, Math.max(minX, dragStartX.get() + event.translationX));
+      translateX.set(nextX);
+
+      // Find nearest item slot by comparing centers
+      const pillCenter = nextX + pillWidth.get() / 2;
+      let nearestSlot = 0;
+      let minDistance = Infinity;
+
+      for (const key of keys) {
+        const item = layouts[key];
+        if (!item) continue;
+        const itemCenter = item.x + item.width / 2;
+        const dist = Math.abs(pillCenter - itemCenter);
+        if (dist < minDistance) {
+          minDistance = dist;
+          nearestSlot = key;
+        }
+      }
+
+      const previousNearest = currentNearest.get();
+      if (nearestSlot !== previousNearest) {
+        currentNearest.set(nearestSlot);
+        // Haptic feedback as finger crosses into a new item
+        scheduleOnRN(triggerHaptic);
+        scheduleOnRN(setHovered, nearestSlot);
+
+        // Adjust width to match hovered item
+        const hoveredLayout = layouts[nearestSlot];
+        if (hoveredLayout) {
+          pillWidth.set(withSpring(hoveredLayout.width, SPRING_CONFIG));
+        }
+      }
     })
     .onFinalize(() => {
-      touch.set(withSpring(0, SPRING));
-      // A tap never starts the pan; its Pressable handles it.
-      if (!dragging.get()) return;
-      dragging.set(false);
-      lift.set(withSpring(0, SPRING));
-      dropped.set(Math.round(x.get() / slotWidth));
+      touch.set(withSpring(0, SPRING_CONFIG));
+      if (!isDragging.get()) return;
+      isDragging.set(false);
+
+      const layouts = tabLayouts.get();
+      const nearest = currentNearest.get();
+      const targetLayout = layouts[nearest];
+
+      if (targetLayout) {
+        translateX.set(withSpring(targetLayout.x, SPRING_CONFIG));
+        pillWidth.set(withSpring(targetLayout.width, SPRING_CONFIG));
+      }
+      scaleX.set(withSpring(1, SPRING_CONFIG));
+
+      // Haptic feedback on pill landing
+      scheduleOnRN(triggerHaptic);
+      dropped.set(nearest);
     });
 
-  const pointer = Gesture.Hover()
+  const hoverGesture = Gesture.Hover()
     .onBegin(() => {
-      hover.set(withSpring(1, SPRING));
+      hover.set(withSpring(1, SPRING_CONFIG));
     })
     .onFinalize(() => {
-      hover.set(withSpring(0, SPRING));
+      hover.set(withSpring(0, SPRING_CONFIG));
     });
-  const gestures = Gesture.Simultaneous(drag, pointer);
 
-  const zoom = useAnimatedStyle(() => ({
-    transform: [{ scale: 1 + Math.max(touch.get(), hover.get() * 0.5) * 0.05 }],
+  const gestures = Gesture.Simultaneous(panGesture, hoverGesture);
+
+  const zoomStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + Math.max(touch.get(), hover.get() * 0.5) * 0.03 }],
   }));
-  const lens = useAnimatedStyle(() => {
-    const swell = Math.max(lift.get(), touch.get() * 0.4);
-    return { transform: [{ translateX: x.get() }, { scaleX: 1 + swell * 0.16 }, { scaleY: 1 + swell * 0.22 }] };
-  });
+
+  const pillAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.get() }, { scaleX: scaleX.get() }],
+    width: pillWidth.get(),
+    opacity: pillOpacity.get(),
+  }));
 
   const Pane = GLASS ? GlassView : View;
   const scheme = theme.isDark ? ('dark' as const) : ('light' as const);
@@ -186,37 +343,36 @@ export function TabBar({ state, navigation, onMenu }: Props) {
   return (
     <View style={[styles.host, { bottom: barOffset(insets.bottom), pointerEvents: 'box-none' }]}>
       <GestureDetector gesture={gestures}>
-        <Animated.View style={zoom}>
+        <Animated.View style={zoomStyle}>
           <Pane
             {...(GLASS ? { glassEffectStyle: 'regular' as const, colorScheme: scheme } : {})}
-            onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
             style={[
               styles.bar,
               !GLASS && {
-                // No blur behind Android views, so the pane stays nearly opaque there.
                 backgroundColor: rgba(theme.surface, Platform.OS === 'android' ? 0.96 : theme.isDark ? 0.82 : 0.78),
-                borderColor: theme.isDark ? rgba('#FFFFFF', 0.1) : rgba('#FFFFFF', 0.9),
+                borderColor: theme.isDark ? rgba('#FFFFFF', 0.12) : rgba('#FFFFFF', 0.85),
               },
               GLASS && styles.glass,
             ]}>
-            {slotWidth > 0 && (
-              <Animated.View style={[styles.lens, { width: slotWidth }, lens]}>
-                {GLASS ? (
-                  <GlassView glassEffectStyle="clear" isInteractive colorScheme={scheme} style={styles.lensFill} />
-                ) : (
-                  <View
-                    style={[
-                      styles.lensFill,
-                      styles.lensRim,
-                      {
-                        backgroundColor: theme.isDark ? rgba('#FFFFFF', 0.12) : rgba('#FFFFFF', 0.85),
-                        borderColor: theme.isDark ? rgba('#FFFFFF', 0.22) : rgba('#FFFFFF', 1),
-                      },
-                    ]}
-                  />
-                )}
-              </Animated.View>
-            )}
+            {/* The single sliding pill indicator behind the items */}
+            <Animated.View style={[styles.pill, pillAnimatedStyle]}>
+              {GLASS ? (
+                <GlassView glassEffectStyle="clear" isInteractive colorScheme={scheme} style={styles.pillGlass} />
+              ) : (
+                <View
+                  style={[
+                    styles.pillGlass,
+                    styles.pillFallback,
+                    {
+                      backgroundColor: theme.isDark ? rgba('#FFFFFF', 0.14) : rgba('#FFFFFF', 0.85),
+                      borderColor: theme.isDark ? rgba('#FFFFFF', 0.22) : rgba('#FFFFFF', 0.95),
+                    },
+                  ]}
+                />
+              )}
+            </Animated.View>
+
+            {/* Destination tab items */}
             {DESTINATIONS.map((destination, slot) => (
               <TabItem
                 key={destination.name}
@@ -224,20 +380,18 @@ export function TabBar({ state, navigation, onMenu }: Props) {
                 label={t(destination.label)}
                 active={lit === slot}
                 slot={slot}
-                slotWidth={slotWidth}
-                x={x}
-                lift={lift}
+                onLayout={handleItemLayout}
                 onPress={() => select(slot)}
               />
             ))}
+
+            {/* Menu item */}
             <TabItem
               destination={{ name: MENU_ROUTE, label: 'Menu', icon: Menu }}
               label={t('Menu')}
               active={lit === SLOTS - 1}
               slot={SLOTS - 1}
-              slotWidth={slotWidth}
-              x={x}
-              lift={lift}
+              onLayout={handleItemLayout}
               onPress={() => select(SLOTS - 1)}
             />
           </Pane>
@@ -252,44 +406,49 @@ interface TabItemProps {
   label: string;
   active: boolean;
   slot: number;
-  slotWidth: number;
-  x: SharedValue<number>;
-  lift: SharedValue<number>;
+  onLayout: (slot: number, x: number, width: number) => void;
   onPress: () => void;
 }
 
 /**
- * One tab. It pops while pressed and grows under a pointer, and swells as the
- * dragged lens passes over it, like looking through glass.
+ * One tab item. Measures its layout on mount and resize, and displays the icon and label.
  */
-function TabItem({ destination, label, active, slot, slotWidth, x, lift, onPress }: TabItemProps) {
+function TabItem({ destination, label, active, slot, onLayout, onPress }: TabItemProps) {
   const theme = useTheme();
   const color = active ? theme.accent : theme.faint(0.55);
   const Icon = destination.icon;
   const press = useSharedValue(0);
   const hover = useSharedValue(0);
-  const magnify = useAnimatedStyle(() => {
-    const near = slotWidth === 0 ? 0 : interpolate(Math.abs(x.get() - slot * slotWidth), [0, slotWidth], [1, 0], 'clamp');
-    return { transform: [{ scale: 1 + near * lift.get() * 0.14 + press.get() * 0.18 + hover.get() * 0.08 }] };
-  });
+
+  const magnify = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + press.get() * 0.12 + hover.get() * 0.05 }],
+  }));
+
   return (
-    <Pressable
-      accessibilityRole="tab"
-      accessibilityState={{ selected: active }}
-      accessibilityLabel={label}
-      onPress={onPress}
-      onPressIn={() => press.set(withSpring(1, PRESS_SPRING))}
-      onPressOut={() => press.set(withSpring(0, SPRING))}
-      onHoverIn={() => hover.set(withSpring(1, SPRING))}
-      onHoverOut={() => hover.set(withSpring(0, SPRING))}
-      style={styles.item}>
-      <Animated.View style={[styles.itemInner, magnify]}>
-        <Icon size={22} color={color} strokeWidth={active ? 2.4 : 2} />
-        <Txt variant="caption" weight={active ? 'semibold' : 'medium'} color={color} numberOfLines={1}>
-          {label}
-        </Txt>
-      </Animated.View>
-    </Pressable>
+    <View
+      style={styles.item}
+      onLayout={(event) => {
+        const { x, width } = event.nativeEvent.layout;
+        onLayout(slot, x, width);
+      }}>
+      <Pressable
+        accessibilityRole="tab"
+        accessibilityState={{ selected: active }}
+        accessibilityLabel={label}
+        onPress={onPress}
+        onPressIn={() => press.set(withSpring(1, { damping: 14, stiffness: 320 }))}
+        onPressOut={() => press.set(withSpring(0, SPRING_CONFIG))}
+        onHoverIn={() => hover.set(withSpring(1, SPRING_CONFIG))}
+        onHoverOut={() => hover.set(withSpring(0, SPRING_CONFIG))}
+        style={styles.itemPressable}>
+        <Animated.View style={[styles.itemInner, magnify]}>
+          <Icon size={22} color={color} strokeWidth={active ? 2.4 : 2} />
+          <Txt variant="caption" weight={active ? 'semibold' : 'medium'} color={color} numberOfLines={1}>
+            {label}
+          </Txt>
+        </Animated.View>
+      </Pressable>
+    </View>
   );
 }
 
@@ -303,25 +462,47 @@ const styles = StyleSheet.create({
     borderRadius: layout.tabBarHeight / 2,
     borderWidth: StyleSheet.hairlineWidth,
     ...Platform.select({
-      web: { boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)', backdropFilter: 'blur(20px) saturate(180%)' },
-      default: { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 8 },
+      web: {
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.6)',
+        backdropFilter: 'blur(24px) saturate(180%)',
+      },
+      default: {
+        shadowColor: '#000',
+        shadowOpacity: 0.12,
+        shadowRadius: 18,
+        shadowOffset: { width: 0, height: 8 },
+        elevation: 8,
+      },
     }),
   },
   glass: { borderWidth: 0 },
-  lens: {
+  pill: {
     position: 'absolute',
     top: PADDING,
     bottom: PADDING,
-    left: PADDING,
+    left: 0,
+    zIndex: 0,
   },
-  lensFill: { flex: 1, borderRadius: (layout.tabBarHeight - PADDING * 2) / 2 },
-  lensRim: {
+  pillGlass: {
+    flex: 1,
+    borderRadius: (layout.tabBarHeight - PADDING * 2) / 2,
+  },
+  pillFallback: {
     borderWidth: 1,
     ...Platform.select({
-      web: { boxShadow: '0 2px 10px rgba(0, 0, 0, 0.10)' },
-      default: { shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+      web: {
+        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.8)',
+      },
+      default: {
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 2,
+      },
     }),
   },
-  item: { flex: 1 },
+  item: { flex: 1, zIndex: 1 },
+  itemPressable: { flex: 1 },
   itemInner: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2 },
 });

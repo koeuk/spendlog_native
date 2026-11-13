@@ -10,7 +10,7 @@ export const unstable_settings = {
 export default function AuthLayout() {
   const theme = useTheme();
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.ground } }} initialRouteName="welcome">
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.ground } }}>
       <Stack.Screen name="welcome" />
       <Stack.Screen name="login" />
       <Stack.Screen name="register" />

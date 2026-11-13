@@ -2,6 +2,9 @@
 
 The React Native (Expo) client for the SpendLog API in `../spendlog`.
 
+Uses Expo SDK 58, React 19.3, and React Native 0.88. Node.js 22.13+ on
+the Node 22 release line (or a supported newer even-numbered release) is required.
+
 - `DEVELOPMENT_PLAN.md` — the phased plan, what is done, and the API rules the client follows.
 - `src/app` — Expo Router routes: `(auth)` for the signed-out screens, `(app)` for the five-tab shell.
 - `src/api` — the axios client, environment resolution and one file per resource.
@@ -14,6 +17,9 @@ npm install
 npx expo start          # Expo Go on a phone, or press a / w for Android / web
 npm run typecheck && npm run lint && npm test
 ```
+
+After upgrading SDK versions, restart Metro with `npx expo start --clear`.
+Use an Expo Go version compatible with SDK 58, or rebuild your development client.
 
 The API host is derived from the Metro bundler (your PC on the LAN, `10.0.2.2`
 on the Android emulator). Set `EXPO_PUBLIC_API_URL` in `.env` for a deployed
