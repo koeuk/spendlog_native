@@ -25,6 +25,7 @@ describe('needsEmailVerification', () => {
   it('lets a verified user, or no user, through', () => {
     expect(needsEmailVerification(user({ email_verified_at: '2026-09-29T00:01:00Z' }))).toBe(false);
     expect(needsEmailVerification(null)).toBe(false);
+    expect(needsEmailVerification(undefined)).toBe(false);
   });
 
   it('does not lock out a cached user that predates the field', () => {

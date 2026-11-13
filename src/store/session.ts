@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
-import { errorStatus, onUnauthorized, setAuthToken } from '@/api/client';
+import { errorStatus, isNetworkError, onUnauthorized, setAuthToken } from '@/api/client';
 import { logout, me } from '@/api/endpoints/auth';
 import { queryClient } from '@/api/queryClient';
 import type { AuthResponse, User } from '@/types/api';
@@ -25,7 +25,9 @@ interface SessionState {
 async function readCachedUser(): Promise<User | null> {
   try {
     const raw = await AsyncStorage.getItem(USER_KEY);
-    return raw ? (JSON.parse(raw) as User) : null;
+    if (!raw) return null;
+    const cached = JSON.parse(raw) as Partial<User> | null;
+    return cached && typeof cached.uuid === 'string' && typeof cached.email === 'string' ? (cached as User) : null;
   } catch {
     return null;
   }
@@ -41,8 +43,8 @@ function cacheUser(user: User | null): void {
  * verify-email screen. Only an explicit `null` counts: a user cached without
  * the field is let through rather than locked out.
  */
-export function needsEmailVerification(user: User | null): boolean {
-  return user !== null && user.email_verified_at === null;
+export function needsEmailVerification(user: User | null | undefined): boolean {
+  return user?.email_verified_at === null;
 }
 
 export const useSessionStore = create<SessionState>()((set, get) => ({
@@ -63,9 +65,10 @@ export const useSessionStore = create<SessionState>()((set, get) => ({
     } catch (error) {
       const cached = await readCachedUser();
       // A 401 means the token is dead (the interceptor already dropped it).
-      // Anything else is the network: keep the last known user so the app
-      // opens offline rather than bouncing to login.
-      if (errorStatus(error) === 401 || !cached) {
+      // Only a real connection failure may use the cached account. A malformed
+      // response (for example frontend HTML from a wrong base URL) signs out
+      // instead of putting `undefined` into the session.
+      if (errorStatus(error) === 401 || !cached || !isNetworkError(error)) {
         setAuthToken(null);
         await clearToken();
         cacheUser(null);

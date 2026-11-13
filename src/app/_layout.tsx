@@ -26,10 +26,6 @@ import { useTheme } from '@/theme/useTheme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
-export const unstable_settings = {
-  initialRouteName: '(app)',
-};
-
 /**
  * The root: providers, fonts, and the session gate. The native splash stays
  * up until the fonts are in and the stored token has been checked, so the

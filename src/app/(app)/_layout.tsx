@@ -7,7 +7,7 @@ import { MenuSheet } from '@/sheets/MenuSheet';
 import { useTheme } from '@/theme/useTheme';
 
 export const unstable_settings = {
-  initialRouteName: '(dashboard)',
+  anchor: '(dashboard)',
 };
 
 /** The signed-in frame: one bottom bar, five branches, each keeping its own stack. */

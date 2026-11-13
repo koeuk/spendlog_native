@@ -4,7 +4,7 @@ import { useTheme } from '@/theme/useTheme';
 
 export const unstable_settings = {
   // Anyone signed out lands on the intro first; it hands on to login.
-  initialRouteName: 'welcome',
+  anchor: 'welcome',
 };
 
 export default function AuthLayout() {
